@@ -11,7 +11,7 @@ async function testConnection(): Promise<void> {
   console.log(
     "Testing connection to:",
     connectionString!.replace(/:([^:@]+)@/, ":****@")
-  ); // Hide password in logs
+  ); 
 
   const sql: Sql = postgres(connectionString!, {
     ssl: "require",
