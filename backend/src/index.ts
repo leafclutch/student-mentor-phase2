@@ -2,16 +2,17 @@ import express, { Request, Response } from "express";
 import { globalErrorHandler } from "./middleware/error.middleware";
 import mentorRouter from "./routes/mentor.router";
 import authRouter from "./routes/auth.router";
-import "dotenv/config"; 
+import studentRouter from "./routes/student.router";
+import "dotenv/config";
 
 const app = express();
 const port = process.env.PORT;
 
 app.use(express.json());
 
-app.use('/auth', authRouter);
-app.use('/mentors', mentorRouter);
-
+app.use("/auth", authRouter);
+app.use("/mentors", mentorRouter);
+app.use("/students", studentRouter);
 
 app.use(globalErrorHandler);
 
