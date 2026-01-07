@@ -6,6 +6,34 @@ interface AuthRequest extends Request {
   user?: any;
 }
 
+export const getStudentDashboard = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = req.user?.user_id;
+
+    if (!userId) {
+      throw new AppError("User not authenticated", 401);
+    }
+
+    if (req.user.role !== "STUDENT") {
+      throw new AppError("Access denied. Students only.", 403);
+    }
+
+    const dashboard = await studentService.getStudentDashboardService(userId);
+    res.status(200).json(dashboard);
+  } catch (error: any) {
+    next(
+      new AppError(
+        error.message || "Failed to fetch student dashboard",
+        error.statusCode || 500
+      )
+    );
+  }
+};
+
 export const getStudentTasks = async (
   req: AuthRequest,
   res: Response,
@@ -71,6 +99,35 @@ export const submitStudentTask = async (
     next(
       new AppError(
         error.message || "Failed to submit task",
+        error.statusCode || 500
+      )
+    );
+  }
+};
+
+export const getStudentProgress = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = req.user?.user_id;
+
+    if (!userId) {
+      throw new AppError("User not authenticated", 401);
+    }
+
+    if (req.user.role !== "STUDENT") {
+      throw new AppError("Access denied. Students only.", 403);
+    }
+
+    const progress = await studentService.getStudentProgressService(userId);
+
+    res.status(200).json(progress);
+  } catch (error: any) {
+    next(
+      new AppError(
+        error.message || "Failed to fetch student progress",
         error.statusCode || 500
       )
     );
