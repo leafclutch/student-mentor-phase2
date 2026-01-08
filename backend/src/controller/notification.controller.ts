@@ -12,7 +12,8 @@ export const getNotifications = async (
   next: NextFunction
 ) => {
   try {
-    const userId = req.user?.id; // Assuming user ID is attached to req.user by auth middleware
+    // console.log("Decoded User:", req.user); 
+    const userId = req.user?.user_id; 
     if (!userId) {
        res.status(401).json({ message: "Unauthorized" });
          return 
