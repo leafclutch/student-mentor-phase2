@@ -3,6 +3,7 @@ import { globalErrorHandler } from "./middleware/error.middleware";
 import mentorRouter from "./routes/mentor.router";
 import authRouter from "./routes/auth.router";
 import taskRouter from "./routes/task.router";
+import notificationRouter from "./routes/notification.router";
 import "dotenv/config"; 
 
 const app = express();
@@ -13,6 +14,7 @@ app.use(express.json());
 app.use('/auth', authRouter);
 app.use('/mentors', mentorRouter);
 app.use('/tasks', taskRouter);
+app.use('/notifications', notificationRouter);
 
 
 app.use(globalErrorHandler);
