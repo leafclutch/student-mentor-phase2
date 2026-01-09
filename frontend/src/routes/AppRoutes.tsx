@@ -1,14 +1,22 @@
-// src/routes/AppRoutes.tsx
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Overview from "../features/student/pages/Overview";
+// File: src/routes/AppRoutes.tsx
+import { Routes, Route, Navigate } from "react-router-dom";
+import Login from "../features/auth/pages/Login";
+import StudentDashboard from "../features/student/pages/StudentDashboard";
+import MentorDashboard from "../features/mentor/MentorDashboard";
 
 const AppRoutes = () => {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Overview />} />
-      </Routes>
-    </BrowserRouter>
+    <Routes>
+      {/* Public */}
+      <Route path="/login" element={<Login />} />
+
+      {/* Dashboards (TEMPORARILY PUBLIC) */}
+      <Route path="/student" element={<StudentDashboard />} />
+      <Route path="/mentor" element={<MentorDashboard />} />
+
+      {/* Default */}
+      <Route path="*" element={<Navigate to="/login" replace />} />
+    </Routes>
   );
 };
 

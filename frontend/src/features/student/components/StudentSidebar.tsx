@@ -1,119 +1,82 @@
-import type { Student } from "../types";
-import StudentProfileCard from "./StudentProfileCard";
-import {
-  FiUser,
-  FiMail,
-  FiMessageCircle,
-  FiHome,
-  FiBarChart2,
-  FiAlertTriangle,
-  FiBell
-} from "react-icons/fi";
-
+import { LogOut, X } from "lucide-react";
+import { useAuth } from "../../../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 type Props = {
-  student: Student;
+  isOpen: boolean;
+  onClose: () => void;
+  currentSection: string;
+  setCurrentSection: (s: any) => void;
 };
 
-const StudentSidebar = ({ student }: Props) => {
+const StudentSidebar = ({
+  isOpen,
+  onClose,
+  currentSection,
+  setCurrentSection,
+}: Props) => {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login", { replace: true });
+  };
+
   return (
-    <aside className="w-72 bg-white border-r p-4 flex flex-col justify-between">
-  <div className="space-y-6">
-
-    
-
-    {/* Student Profile (TOP LEFT, BELOW PORTAL) */}
-    <StudentProfileCard  student={student} />
-
-{/* mentor details */}
-<div className="pb-4 border-b">
-  <p className="text-xs uppercase tracking-wide text-gray-500 mb-3 font-medium">
-    Mentor
-  </p>
-
-  {/* Mentor Name */}
-  <div className="flex items-center gap-2 text-sm text-gray-700">
-    <FiUser className="text-gray-500" />
-    <span>{student.mentor.name}</span>
-  </div>
-
-  {/* Mentor Role */}
-  <p className="text-sm text-gray-500 ml-6">
-    Senior Dev
-  </p>
-
-  {/* Email */}
-  <div className="flex items-center gap-2 text-sm text-gray-900 mt-2 ml-1">
-    <FiMail />
-    <a
-      href={`mailto:${student.mentor.email}`}
-      className="hover:text-gray-900"
-    >
-      {student.mentor.email}
-    </a>
-  </div>
-
-  {/* Discord */}
-  <div className="flex items-center gap-2 text-sm text-gray-900 mt-1 ml-1">
-    <FiMessageCircle />
-    <a
-      href={student.mentor.discordLink}
-      target="_blank"
-      className="hover:text-indigo-900"
-    >
-      Contact on Discord
-    </a>
-  </div>
-</div>
-
-
-    {/* Progress */}
-    <div className="pb-4 border-b">
-      <p className="text-sm font-medium text-gray-500">Course Progress</p>
-      <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+    <>
+      {/* Overlay */}
+      {isOpen && (
         <div
-          className="bg-indigo-600 h-2 rounded-full"
-          style={{ width: `${student.progress}%` }}
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={onClose}
         />
-      </div>
-      <p className="text-xs mt-1">{student.progress}%</p>
-    </div>
+      )}
 
-    {/* Navigation */}
-   <nav className="space-y-3">
-  <p className="text-xs uppercase tracking-wide text-gray-500 font-medium">
-    Dashboard
-  </p>
+      <aside
+        className={`fixed lg:static inset-y-0 left-0 z-50 w-72 bg-white border-r flex flex-col transform transition-transform duration-300
+        ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
+      >
+        {/* Close button (mobile) */}
+        <button
+          onClick={onClose}
+          className="lg:hidden absolute top-4 right-4 p-2"
+        >
+          <X />
+        </button>
 
-  <div className="flex items-center gap-3 text-sm text-gray-900 cursor-pointer hover:bg-gray-200">
-    <FiHome />
-    <span>Overview</span>
-  </div>
+        {/* MENU */}
+        <div className="p-6 space-y-2">
+          {["overview", "progress", "warnings", "notifications"].map((item) => (
+            <button
+              key={item}
+              onClick={() => {
+                setCurrentSection(item as any);
+                onClose();
+              }}
+              className={`w-full text-left px-3 py-2 rounded-lg ${
+                currentSection === item
+                  ? "bg-indigo-50 text-indigo-600"
+                  : "hover:bg-gray-100"
+              }`}
+            >
+              {item.toUpperCase()}
+            </button>
+          ))}
+        </div>
 
-  <div className="flex items-center gap-3 text-sm text-gray-900 cursor-pointer hover:bg-gray-200">
-    <FiBarChart2 />
-    <span>Progress Indicator</span>
-  </div>
-
-  <div className="flex items-center gap-3 text-sm text-gray-900 cursor-pointer hover:bg-gray-200">
-    <FiAlertTriangle />
-    <span>Warnings</span>
-  </div>
-
-  <div className="flex items-center gap-3 text-sm text-gray-900 cursor-pointer hover:bg-gray-200">
-    <FiBell />
-    <span>Notifications</span>
-  </div>
-</nav>
-
-  </div>
-
-  {/* Logout */}
-  <button className="border rounded-md py-2 text-sm cursor-pointer hover:bg-blue-700">
-    Logout
-  </button>
-</aside>
-
+        {/* LOGOUT */}
+        <div className="mt-auto p-6 border-t">
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center gap-2 text-red-600 hover:bg-red-50 px-4 py-2 rounded-lg"
+          >
+            <LogOut size={18} />
+            Logout
+          </button>
+        </div>
+      </aside>
+    </>
   );
 };
 
