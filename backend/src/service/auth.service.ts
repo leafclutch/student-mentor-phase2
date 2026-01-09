@@ -20,11 +20,10 @@ export const loginUserService = async ({ userId, password, user_id }: any) => {
      throw new AppError("Invalid User ID format", 400);
   }
 
-  // 1️⃣ Find user from users table
   const user = await prisma.user.findUnique({
     where: { user_id: loginId },
   });
-  console.log(user);
+  // console.log(user);
 
   if (!user) {
     throw new AppError("User not found", 404);
@@ -45,7 +44,7 @@ export const loginUserService = async ({ userId, password, user_id }: any) => {
   const {password : userpass, ...rest} = user
   const tokenPayload = JSON.parse(JSON.stringify({...rest}))
 
-  const token = jwt.sign(tokenPayload, process.env.JWT_SECRET || "fallback_secret_key", { expiresIn: "1h" });
+  const token = jwt.sign(tokenPayload, process.env.JWT_SECRET || "fallback_secret_key", { expiresIn: "1d" });
 
   return {
     message: "Login successful",
