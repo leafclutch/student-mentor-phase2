@@ -7,10 +7,12 @@ import warningRouter from "./routes/warning.router";
 import "dotenv/config";
 import taskRouter from "./routes/task.router";
 import "dotenv/config"; 
+import cors from "cors";
 
 const app = express();
 const port = process.env.PORT;
 
+app.use(cors()); 
 app.use(express.json());
 
 app.use("/auth", authRouter);
