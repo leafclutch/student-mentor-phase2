@@ -9,48 +9,49 @@ import {
   ChevronRight,
   Play,
 } from "lucide-react";
+import { useStudent } from "../../../context/StudentContext";
 
 /* ---------------- MOCK DATA (replace with API later) ---------------- */
 
-const mockTasks: Task[] = [
-  {
-    task_id: 1,
-    title: "HTML Basics",
-    status: "completed",
-  },
-  {
-    task_id: 2,
-    title: "CSS Fundamentals",
-    status: "completed",
-  },
-  {
-    task_id: 3,
-    title: "Responsive Design",
-    status: "in_progress",
-  },
-  {
-    task_id: 4,
-    title: "JavaScript Basics",
-    status: "pending",
-  },
-  {
-    task_id: 5,
-    title: "React Introduction",
-    status: "pending",
-  },
-];
+// const mockTasks: Task[] = [
+//   {
+//     task_id: 1,
+//     title: "HTML Basics",
+//     status: "completed",
+//   },
+//   {
+//     task_id: 2,
+//     title: "CSS Fundamentals",
+//     status: "completed",
+//   },
+//   {
+//     task_id: 3,
+//     title: "Responsive Design",
+//     status: "in_progress",
+//   },
+//   {
+//     task_id: 4,
+//     title: "JavaScript Basics",
+//     status: "pending",
+//   },
+//   {
+//     task_id: 5,
+//     title: "React Introduction",
+//     status: "pending",
+//   },
+// ];
 
 /* ---------------- COMPONENT ---------------- */
 
 const ProgressIndicator: React.FC = () => {
-  const tasks: Task[] = mockTasks;
+  // const tasks: Task[] = mockTasks;
+  const { progressReport } = useStudent()
 
-  const completed = tasks.filter(t => t.status === "completed").length;
-  const inProgress = tasks.filter(t => t.status === "in_progress").length;
-  const pending = tasks.filter(t => t.status === "pending").length;
+const completed = progressReport?.taskStats?.completed ?? 0;
+const inProgress = progressReport?.taskStats?.approved ?? 0;
+const pending = progressReport?.taskStats?.pending ?? 0;
 
-  const progressPercent =
-    tasks.length === 0 ? 0 : Math.round((completed / tasks.length) * 100);
+  const progressPercent = progressReport?.completionPercentage ?? 0
 
   return (
     <div className="bg-gray-50 p-4 md:p-8">
@@ -142,8 +143,8 @@ const ProgressIndicator: React.FC = () => {
           </div>
 
           <div className="space-y-4">
-            {tasks.map(task => (
-              <TaskRow key={task.task_id} task={task} />
+            {progressReport?.courses.map((course:any) => (
+              <TaskRow key={course.course_id} task={course} />
             ))}
           </div>
         </div>
@@ -203,18 +204,18 @@ const TaskRow = ({ task }: { task: Task }) => {
     <div className="flex items-center justify-between p-4 border rounded-xl hover:shadow transition">
       <div className="flex items-center gap-4">
         <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-          {status.icon}
+          {status?.icon}
         </div>
 
         <div>
           <h3 className="font-semibold text-gray-900">{task.title}</h3>
-          <p className="text-sm text-gray-500">Task ID: {task.task_id}</p>
+          <p className="text-sm text-gray-500">Task ID: {task.course_id}</p>
         </div>
       </div>
 
       <div className="flex items-center gap-4">
-        <span className={`px-4 py-1.5 rounded-lg text-sm font-medium ${status.badge}`}>
-          {status.label}
+        <span className={`px-4 py-1.5 rounded-lg text-sm font-medium ${status?.badge}`}>
+          {status?.label}
         </span>
         <ChevronRight className="w-5 h-5 text-gray-400" />
       </div>

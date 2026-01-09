@@ -48,16 +48,15 @@ export const getStudentWarnings = async (
       throw new AppError("User not authenticated", 401);
     }
 
-    const { studentId } = req.params;
-
-    if (!studentId) {
-      throw new AppError("Student ID is required", 400);
+    // Check if the user is a STUDENT - only students can check warnings
+    if (req.user.role !== "STUDENT") {
+      throw new AppError("Access denied. Students only.", 403);
     }
 
+    const studentId = userId;
+
     const warnings = await warningService.getStudentWarningsService(
-      studentId,
       userId,
-      req.user.role
     );
 
     res.status(200).json(warnings);

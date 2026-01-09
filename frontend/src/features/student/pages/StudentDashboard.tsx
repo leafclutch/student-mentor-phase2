@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Code, Link2, Lock, ChevronRight, Bookmark, HelpCircle, FileText, ExternalLink, Moon, Menu } from 'lucide-react';
 import ProgressIndicator from './ProgressIndicator';
 import  Warnings  from '../pages/Warnings';
 import Notifications from './Notifications';
-import { getStudentDashboard } from '../../../api/studentApi';
 
 import StudentSidebar from '../components/StudentSidebar';
 
@@ -25,20 +24,6 @@ const CourseModulePage: React.FC = () => {
       console.log('Task clicked:', taskId);
     }
   };
-
-useEffect(() => {
-  const loadDashboard = async () => {
-    try {
-      const data = await getStudentDashboard();
-      console.log("Student dashboard data:", data);
-    } catch (err) {
-      console.error("Student API error", err);
-    }
-  };
-
-  loadDashboard();
-}, []);
-
   
 
   return (
