@@ -6,58 +6,20 @@ import {
   CheckCircle,
   Info,
 } from "lucide-react";
-
-/* ---------------- TYPES ---------------- */
-
-export type Warning = {
-  id: number;
-  title: string;
-  message: string;
-  level: "High" | "Medium" | "Low";
-  date: string;
-  mentor: string;
-  status: "active" | "resolved";
-};
+import { useStudent } from "../../../context/StudentContext";
+import moment from "moment";
 
 /* ---------------- MOCK DATA (replace with API later) ---------------- */
 
-const mockWarnings: Warning[] = [
-  {
-    id: 1,
-    title: "Missed Assignment Deadline",
-    message: "You failed to submit Task 3 before the deadline.",
-    level: "High",
-    date: "2024-10-12",
-    mentor: "Sarah Connor",
-    status: "active",
-  },
-  {
-    id: 2,
-    title: "Low Attendance",
-    message: "Your attendance has fallen below 75% this month.",
-    level: "Medium",
-    date: "2024-09-28",
-    mentor: "Sarah Connor",
-    status: "active",
-  },
-  {
-    id: 3,
-    title: "Late Submission",
-    message: "Task 1 was submitted 2 days late.",
-    level: "Low",
-    date: "2024-09-10",
-    mentor: "Sarah Connor",
-    status: "resolved",
-  },
-];
+
 
 /* ---------------- COMPONENT ---------------- */
 
 const StudentWarnings: React.FC = () => {
-  const warnings = mockWarnings;
+  const {warning} = useStudent()
 
-  const activeWarnings = warnings.filter(w => w.status === "active");
-  const resolvedWarnings = warnings.filter(w => w.status === "resolved");
+  const activeWarnings = warning?.warnings?.filter(w => w.status === "ACTIVE");
+  const resolvedWarnings = warning?.warnings?.filter(w => w.status === "RESOLVED");
 
   return (
     <div className="bg-gray-50 p-4 md:p-8">
@@ -74,18 +36,18 @@ const StudentWarnings: React.FC = () => {
             </p>
           </div>
 
-          {activeWarnings.length > 0 && (
+          {activeWarnings && activeWarnings.length > 0 && (
             <div className="flex items-center gap-2 px-4 py-2 bg-red-50 border border-red-200 rounded-lg">
               <span className="w-2 h-2 bg-red-600 rounded-full" />
               <span className="text-sm font-medium text-red-600">
-                {activeWarnings.length} Active Warning
+                {activeWarnings?.length} Active Warning
               </span>
             </div>
           )}
         </div>
 
         {/* Active Warnings */}
-        {activeWarnings.length > 0 && (
+        {activeWarnings && activeWarnings.length > 0 && (
           <section className="space-y-4">
             <div className="flex items-center gap-2">
               <AlertCircle className="w-5 h-5 text-red-600" />
@@ -116,17 +78,17 @@ const StudentWarnings: React.FC = () => {
                       </div>
 
                       <p className="text-gray-600 mb-4">
-                        {warning.message}
+                        {warning.remark}
                       </p>
 
                       <div className="flex flex-wrap gap-6 text-sm text-gray-500">
                         <span className="flex items-center gap-2">
                           <Calendar className="w-4 h-4" />
-                          Issued: {warning.date}
+                          Issued: {moment(warning.createdAt).format("YYYY-MM-DD")}
                         </span>
                         <span className="flex items-center gap-2">
                           <User className="w-4 h-4" />
-                          By: {warning.mentor}
+                          By: {warning.mentor.name}
                         </span>
                       </div>
                     </div>

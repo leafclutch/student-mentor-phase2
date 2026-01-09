@@ -1,7 +1,9 @@
 import axios from "axios";
 
+const BASE_URL = import.meta.env.VITE_API_URL || "https://student-mentor-phase2.vercel.app";
+
 const api = axios.create({
-  baseURL: "https://student-mentor-phase2.vercel.app",
+  baseURL: BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },
@@ -9,7 +11,7 @@ const api = axios.create({
 
 // Attach token to every request
 api.interceptors.request.use((config) => {
-  const auth = localStorage.getItem("auth");
+  const auth = localStorage.getItem("authUser");
 
   if (auth) {
     const { token } = JSON.parse(auth);

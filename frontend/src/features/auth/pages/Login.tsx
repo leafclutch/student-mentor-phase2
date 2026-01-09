@@ -4,6 +4,7 @@ import { FiLock, FiUser } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { loginApi } from "../../../api/authApi";
 import { useAuth } from "../../../context/AuthContext";
+import toast from "react-hot-toast";
 
 const Login = () => {
   const [userId, setUserId] = useState("");
@@ -18,18 +19,20 @@ const Login = () => {
 
   try {
     const response = await loginApi({ userId, password });
-
+    console.log(response)
     authLogin({
-      id: response.userId,
-      role: response.role,
+      id: response.user.user_id,
+      role: response.user.role,
       token: response.token,
     });
 
-    if (response.role === "student") {
+    if (response.user.role === "STUDENT") {
       navigate("/student", { replace: true });
-    } else if (response.role === "mentor") {
+    } else if (response.user.role === "MENTOR") {
       navigate("/mentor", { replace: true });
     }
+
+    toast.success(response.message)
   } catch (error) {
     console.error(error);
     setError("Invalid credentials or server error.");
