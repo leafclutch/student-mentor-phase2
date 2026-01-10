@@ -7,16 +7,28 @@ const api = axios.create({
   },
 });
 
-// Attach token to every request
-api.interceptors.request.use((config) => {
-  const auth = localStorage.getItem("auth");
+api.interceptors.request.use(
+  (config) => {
+    // We check 'auth' first as per your LocalStorage screenshot
+    const authData = localStorage.getItem("auth");
 
-  if (auth) {
-    const { token } = JSON.parse(auth);
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-
-  return config;
-});
+    if (authData) {
+      try {
+        const parsedAuth = JSON.parse(authData);
+        const token = parsedAuth.token; // This matches your "token": "ey..." structure
+        
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+          // Debugging: Uncomment the line below to see the token in console
+          // console.log("Request Header Set:", config.headers.Authorization);
+        }
+      } catch (e) {
+        console.error("Auth Parsing Error:", e);
+      }
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
 export default api;

@@ -12,27 +12,59 @@ const Login = () => {
   const navigate = useNavigate();
   const {login: authLogin}= useAuth();
 
- const handleSubmit = async (e: React.FormEvent) => {
+const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
   setError("");
 
   try {
-    const response = await loginApi({ userId, password });
+    // 1. Clean input: force Uppercase and remove spaces to satisfy backend validation
+    const cleanUserId = userId.trim().toUpperCase();
+    
+    // 2. Call Login API
+    const response = await loginApi({ userId: cleanUserId, password });
 
-    authLogin({
-      id: response.userId,
-      role: response.role,
-      token: response.token,
-    });
+    // 3. Extract data from the nested 'user' object
+    const userData = response.user; 
+    const rawRole = userData?.role || response.role; // Fallback if backend structure varies
+    const token = response.token;
 
-    if (response.role === "student") {
-      navigate("/student", { replace: true });
-    } else if (response.role === "mentor") {
-      navigate("/mentor", { replace: true });
+    if (!rawRole || !token) {
+      throw new Error("Invalid response: Role or Token missing from server.");
     }
-  } catch (error) {
-    console.error(error);
-    setError("Invalid credentials or server error.");
+
+    // 4. Normalize role to UPPERCASE to match ProtectedRoute allowedRoles
+    const normalizedRole = rawRole.toUpperCase() as "STUDENT" | "MENTOR";
+
+    const authData = {
+      id: userData?.userId || userData?.id || response.userId,
+      role: normalizedRole,
+      token: token,
+    };
+
+    // 5. Store in LocalStorage exactly where axios.ts looks for it
+    localStorage.setItem("auth", JSON.stringify(authData));
+    
+    // 6. Update global Auth Context state
+    authLogin(authData);
+
+    // 7. Navigate based on the normalized role
+    // Using uppercase ensures we don't accidentally fall into the 'student' path
+    if (normalizedRole === "MENTOR") {
+      console.log("Role verified as MENTOR. Redirecting to Mentor Dashboard...");
+      navigate("/mentor", { replace: true });
+    } else if (normalizedRole === "STUDENT") {
+      console.log("Role verified as STUDENT. Redirecting to Student Dashboard...");
+      navigate("/student", { replace: true });
+    } else {
+      setError("Unrecognized user role. Contact Administrator.");
+    }
+
+  } catch (error: any) {
+    console.error("Login Submission Error:", error);
+    
+    // Extract specific error message from server if available (e.g., "Invalid User ID format")
+    const serverMessage = error.response?.data?.message || "Invalid credentials or server error.";
+    setError(serverMessage);
   }
 };
 

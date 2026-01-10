@@ -1,20 +1,26 @@
 import { useState } from 'react';
 import { AlertCircle, HelpCircle, ChevronDown } from 'lucide-react';
+import { issueWarning } from '../../../api/mentorApi';
 
-const Warnings = () => {
-  
+// Define the Student interface to fix TS errors
+interface Student {
+  id: string;
+  name: string;
+  avatar: string;
+  warning_status?: string | null;
+}
+
+interface WarningsProps {
+  students: Student[];
+}
+
+const Warnings = ({ students }: WarningsProps) => {
   const [selectedStudent, setSelectedStudent] = useState('');
   const [severity, setSeverity] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [isStudentDropdownOpen, setIsStudentDropdownOpen] = useState(false);
-
-  const students = [
-    { id: 'STD-001', name: 'Sarah Jenkins', avatar: '👩' },
-    { id: 'STD-002', name: 'Michael Chang', avatar: '👨' },
-    { id: 'STD-003', name: 'Jessica Wong', avatar: '👩' },
-    { id: 'STD-004', name: 'David Miller', avatar: '👨' }
-  ];
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const severityLevels = [
     {
@@ -49,19 +55,30 @@ const Warnings = () => {
     }
   ];
 
-  const handleIssueWarning = () => {
+  const handleIssueWarning = async () => {
     if (selectedStudent && severity && title && description) {
-      console.log({
-        student: selectedStudent,
-        severity,
-        title,
-        description
-      });
-      // Reset
-      setSelectedStudent('');
-      setSeverity('');
-      setTitle('');
-      setDescription('');
+      try {
+        setIsSubmitting(true);
+        await issueWarning({
+          student_id: selectedStudent,
+          severity: severity,
+          title: title,
+          description: description
+        });
+        
+        alert("Warning issued successfully!");
+        
+        // Reset Form
+        setSelectedStudent('');
+        setSeverity('');
+        setTitle('');
+        setDescription('');
+      } catch (error) {
+        console.error("Failed to issue warning:", error);
+        alert("Error issuing warning. Please try again.");
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -208,15 +225,15 @@ const Warnings = () => {
             </button>
             <button
               onClick={handleIssueWarning}
-              disabled={!selectedStudent || !severity || !title || !description}
+              disabled={!selectedStudent || !severity || !title || !description || isSubmitting}
               className={`px-6 py-2 rounded-lg flex items-center justify-center gap-2 text-sm sm:text-base order-1 sm:order-2 ${
-                selectedStudent && severity && title && description
+                selectedStudent && severity && title && description && !isSubmitting
                   ? 'bg-red-600 text-white hover:bg-red-700'
                   : 'bg-gray-300 text-gray-500 cursor-not-allowed'
               }`}
             >
               <AlertCircle size={16} className="sm:w-[18px] sm:h-[18px]" />
-              Issue Warning
+              {isSubmitting ? 'Sending...' : 'Issue Warning'}
             </button>
           </div>
 
