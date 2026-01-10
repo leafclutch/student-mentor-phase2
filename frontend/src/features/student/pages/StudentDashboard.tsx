@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Code, Link2, Lock, ChevronRight, Bookmark, HelpCircle, FileText, ExternalLink, Moon, Menu } from 'lucide-react';
+import { Code, Link2, Lock, ChevronRight, Bookmark, HelpCircle, FileText, ExternalLink,  Menu } from 'lucide-react';
 import ProgressIndicator from './ProgressIndicator';
 import  Warnings  from '../pages/Warnings';
 import Notifications from './Notifications';
@@ -68,10 +68,8 @@ useEffect(() => {
             <h1 className="text-xl font-bold text-gray-900">Web Development Course</h1>
           </div>
           <div className="flex items-center gap-4">
-            <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-              <Moon className="w-5 h-5 text-gray-600" />
-            </button>
-            <span className="text-sm text-gray-600">Currently Viewing: <span className="font-semibold text-gray-900">Module 1</span></span>
+            
+            
           </div>
         </div>
 
