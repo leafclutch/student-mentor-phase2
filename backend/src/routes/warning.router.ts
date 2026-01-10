@@ -10,7 +10,7 @@ router.use(protect);
 router.post("/", issueWarning);
 
 // GET /warnings/:studentId - fetch warnings for a student (student can see own, mentor can see assigned students)
-router.get("/:studentId", getStudentWarnings);
+router.get("/", getStudentWarnings);
 
 export default router;
 
