@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { User, Mail, Phone, BookOpen,  Info } from 'lucide-react';
-
+import { createStudent } from '../../../api/mentorApi';
 const AddStudent = () => {
   const [formData, setFormData] = useState({
     fullName: '',
@@ -12,9 +12,32 @@ const AddStudent = () => {
     linkedinUrl: ''
   });
 
-  const handleSubmit = () => {
-    console.log('Form submitted:', formData);
+// Make sure to add 'async' here 
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault(); // Prevents the page from refreshing
+
+  // 1. Construct the data exactly how the backend wants it
+  const payload = {
+    name: formData.fullName,           // Backend expects 'name', not 'fullName'
+    password: "DefaultPassword123",    // Backend requires a password
+    photo: null,
+    social_links: {
+      github: formData.githubUrl || "",
+      linkedin: formData.linkedinUrl || ""
+    }
   };
+
+  try {
+    // 2. Send it to the backend
+    await createStudent(payload);
+    
+    alert("Student added successfully!");
+    // Optional: clear the form here if you want
+  } catch (err) {
+    console.error("Failed to add student:", err);
+    alert("Error adding student. Please check the console.");
+  }
+};
 
   const handleCancel = () => {
     setFormData({
