@@ -10,8 +10,10 @@ export const getAssignTasks = async () => {
   return res.data;
 };
 
-export const submitTask = async (studentId:string) => {
-  const res = await api.post(`/students/tasks/${studentId}/submit`);
+export const submitTask = async (taskId:string, link:string) => {
+  const res = await api.post(`/students/tasks/${taskId}/submit`, {
+    github_link: link,
+  });
   return res.data;
 };
 

@@ -1,15 +1,35 @@
-import React, { useState } from 'react';
+import React, { useState, type JSX } from 'react';
 import {
-  Star,
-  MessageSquare,
   AlertTriangle,
-  Calendar,
-  CheckCircle,
   SlidersHorizontal,
+  ClipboardCheck,
+  Send,
+  Bell,
+  BookOpen,
 } from 'lucide-react';
+import { useStudent } from '../../../context/StudentContext';
+import moment from 'moment';
+import type { NotificationType } from '../../auth/types/notification';
+import { markAsRead, markAsReadAll } from '../../../api/studentApi';
 
 const Notifications: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'all' | 'unread' | 'mentions' | 'system'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'unread' | 'read' | 'system'>('all');
+
+  const { notifications } = useStudent()
+
+  const iconMap:Record<NotificationType, JSX.Element> = {
+    TASK_ASSIGNED: <ClipboardCheck className="text-blue-500" />,
+    WARNING_ISSUED: <AlertTriangle className="text-red-500" />,
+    SYSTEM_ANNOUNCEMENT: <Bell className="text-purple-500" />,
+    TASK_REVIEWED: <Send className="text-green-500" />,
+    COURSE_CREATED: <BookOpen className="text-indigo-500" />,
+  };
+
+  const handleReadAll = async (e:React.MouseEvent) =>{
+    e.preventDefault();
+    await markAsReadAll()
+  }
+  
 
   
 
@@ -28,7 +48,9 @@ const Notifications: React.FC = () => {
           </div>
 
           <div className="flex gap-3">
-            <button className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 font-medium">
+            <button
+            onClick={(e)=>handleReadAll(e)}
+            className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 font-medium">
               Mark all as read
             </button>
             <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm font-medium text-gray-700 flex items-center gap-2">
@@ -40,20 +62,20 @@ const Notifications: React.FC = () => {
 
         {/* Tabs */}
         <div className="flex gap-6 border-b border-gray-200 mb-6 overflow-x-auto">
-          {(['all', 'unread', 'mentions', 'system'] as const).map((tab) => (
+          {(['all', 'unread', 'read', 'system'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`pb-3 font-medium capitalize whitespace-nowrap relative ${
-                activeTab === tab
+              className={`pb-3 font-medium capitalize whitespace-nowrap relative ${activeTab === tab
                   ? 'text-indigo-600'
                   : 'text-gray-600 hover:text-gray-900'
-              }`}
+                }`}
             >
               {tab}
-              {tab === 'unread' && (
+              {tab === 'unread' && notifications?.filter(n => !n.isRead).length >= 1 && (
                 <span className="ml-2 px-2 py-0.5 bg-red-100 text-red-600 text-xs rounded-full">
-                  3
+                  {/* Show unread notifications count */}
+                  {notifications?.filter(n => !n.isRead).length}
                 </span>
               )}
               {activeTab === tab && (
@@ -65,13 +87,13 @@ const Notifications: React.FC = () => {
 
         {/* TODAY */}
         <div className="mb-8">
-          <h2 className="text-xs font-semibold text-gray-500 uppercase mb-4">
+          {/* <h2 className="text-xs font-semibold text-gray-500 uppercase mb-4">
             Today
-          </h2>
+          </h2> */}
 
           <div className="space-y-4">
             {/* Grade */}
-            <NotificationCard
+            {/* <NotificationCard
               icon={<Star className="w-5 h-5 text-indigo-600" fill="currentColor" />}
               title="New Grade Posted: UX Fundamentals"
               description={
@@ -82,31 +104,57 @@ const Notifications: React.FC = () => {
               }
               time="2 hrs ago"
               highlight
-            />
+            /> */}
 
             {/* Message */}
-            <NotificationCard
+            {/* <NotificationCard
               icon={<MessageSquare className="w-5 h-5 text-indigo-600" />}
               title="Message from Mentor: Sarah Connor"
               description={`"Hey Alex, I've reviewed your project proposal..."`}
               time="4 hrs ago"
               actions
               highlight
-            />
+            /> */}
 
             {/* Overdue */}
-            <NotificationCard
-              icon={<AlertTriangle className="w-5 h-5 text-red-600" />}
-              title="Assignment Overdue: Wireframing Basics"
-              description="This assignment was due yesterday at 11:59 PM."
-              time="6 hrs ago"
-              danger
-            />
+            {notifications
+              ?.filter((n) => {
+                if (activeTab === 'all') return true;
+                if (activeTab === 'unread') return !n.isRead;
+                if (activeTab === 'read') return n.isRead;
+                if (activeTab === 'system') return n.type === 'SYSTEM_ANNOUNCEMENT';
+                return true;
+              })
+              .map((n) => (
+                <NotificationCard
+                  key={n.id}
+                  icon={iconMap[n.type]}
+                  title={
+                    n.type === "TASK_ASSIGNED"
+                      ? "Task Assigned"
+                      : n.type === "TASK_REVIEWED"
+                      ? "Task Reviewed"
+                      : n.type === "WARNING_ISSUED"
+                      ? "Warning Issued"
+                      : n.type === "COURSE_CREATED"
+                      ? "New Course Created"
+                      : n.type === "SYSTEM_ANNOUNCEMENT"
+                      ? "System Announcement"
+                      : "Notification"
+                  }
+                  description={n.message}
+                  time={moment(n.createdAt).fromNow()}
+                  highlight={!n.isRead}
+                  notificationId = {n.id}
+                  danger={n.type === "WARNING_ISSUED"}
+                />
+              ))}
+
           </div>
         </div>
 
         {/* YESTERDAY */}
-        <div>
+        {/* <div>
           <h2 className="text-xs font-semibold text-gray-500 uppercase mb-4">
             Yesterday
           </h2>
@@ -126,7 +174,7 @@ const Notifications: React.FC = () => {
               time="Yesterday"
             />
           </div>
-        </div>
+        </div> */}
 
         {/* Footer */}
         <div className="mt-8 text-center">
@@ -151,6 +199,7 @@ type CardProps = {
   description: React.ReactNode;
   time: string;
   highlight?: boolean;
+  notificationId: string;
   danger?: boolean;
   actions?: boolean;
 };
@@ -161,18 +210,24 @@ const NotificationCard: React.FC<CardProps> = ({
   description,
   time,
   highlight,
+  notificationId,
   danger,
   actions,
 }) => {
+  
+  const handleRead = async (e:React.MouseEvent)=>{
+    e.stopPropagation();
+    await markAsRead(notificationId)
+  }
+
   return (
-    <div
-      className={`rounded-xl p-5 shadow-sm hover:shadow-md transition ${
-        danger
+    <div onClick={(e)=>handleRead(e)}
+      className={`rounded-xl cursor-pointer p-5 shadow-sm hover:shadow-md transition ${danger
           ? 'bg-red-50 border-l-4 border-red-500'
           : highlight
-          ? 'bg-white border-l-4 border-indigo-500'
-          : 'bg-white'
-      }`}
+            ? 'bg-white border-l-4 border-indigo-500'
+            : 'bg-white'
+        }`}
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex gap-4">

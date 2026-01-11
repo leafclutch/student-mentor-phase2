@@ -1,5 +1,5 @@
 // Notification types
-export type NotificationType = "TASK_ASSIGNED" | "SYSTEM_ANNOUNCEMENT" | "OTHER";
+export type NotificationType = "TASK_ASSIGNED" | "TASK_REVIEWED" | "WARNING_ISSUED" | "SYSTEM_ANNOUNCEMENT" | "COURSE_CREATED";
 
 // Single notification
 export interface Notification {
