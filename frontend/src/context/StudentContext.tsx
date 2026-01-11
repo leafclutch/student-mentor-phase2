@@ -31,7 +31,7 @@ type StudentContextType = {
     fetchProgressReport: () => Promise<void>;
     fetchStudentWarnings: () => Promise<void>;
     fetchNotifications: () => Promise<void>;
-    submitStudentTask: (studentId: string) => Promise<void>;
+    submitStudentTask: (studentId: string, link:string) => Promise<void>;
     markNotificationAsRead: (notificationId: string) => Promise<void>;
     markAllNotificationsAsRead: () => Promise<void>;
 };
@@ -77,6 +77,13 @@ export const StudentProvider = ({ children }: { children: ReactNode }) => {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        if (tasks) {
+          console.log("Now tasks is ready:", tasks);
+        }
+      }, [tasks]);
+      
 
     // Progress (Report) API
     const fetchProgressReport = async () => {
@@ -147,16 +154,13 @@ export const StudentProvider = ({ children }: { children: ReactNode }) => {
     };
 
     // Function to submit a task by studentId
-    const submitStudentTask = async (studentId: string) => {
+    const submitStudentTask = async (studentId: string, link:string) => {
         setLoading(true);
         try {
-            const response = await submitTask(studentId);
-            toast.success("Task submitted successfully!");
+            const response = await submitTask(studentId, link);
             studentDashboard();
             fetchTasks();
             fetchProgressReport();
-            fetchStudentWarnings();
-            fetchNotifications();
             return response;
         } catch (err: any) {
             toast.error(err?.response?.data.message ?? "Failed to submit task");
@@ -171,6 +175,8 @@ export const StudentProvider = ({ children }: { children: ReactNode }) => {
         fetchProgressReport();
         fetchStudentWarnings();
         fetchNotifications();
+
+        console.log(tasks)
     }, []);
 
     useEffect(() => {

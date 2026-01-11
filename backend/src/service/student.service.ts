@@ -165,6 +165,14 @@ export const submitStudentTaskService = async (
     throw new AppError("Task assignment not found for this student", 404);
   }
 
+  // Check if the task is already submitted and a github_link is already present in DB
+  if (
+    assignment.status === TaskStatus.SUBMITTED &&
+    assignment.github_link // optionally && assignment.github_link !== ""
+  ) {
+    throw new AppError("Task already submitted", 400);
+  }
+
   const updatedAssignment = await prisma.taskAssignment.update({
     where: {
       task_id_student_id: {
