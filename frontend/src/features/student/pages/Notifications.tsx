@@ -31,6 +31,8 @@ const Notifications: React.FC = () => {
   }
   
 
+  
+
   return (
     <div className="bg-gray-50 p-4 sm:p-6 lg:p-8">
       <div className="max-w-6xl mx-auto">

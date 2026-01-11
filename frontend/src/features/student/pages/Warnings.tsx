@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { useStudent } from "../../../context/StudentContext";
 import moment from "moment";
+import type { Warning } from "../../auth/types/warning";
 
 /* ---------------- MOCK DATA (replace with API later) ---------------- */
 
@@ -56,7 +57,7 @@ const StudentWarnings: React.FC = () => {
               </h2>
             </div>
 
-            {activeWarnings.map(warning => (
+            {activeWarnings.map((warning: Warning) => (
               <div
                 key={warning.id}
                 className="bg-white border-l-4 border-red-500 rounded-xl p-6 shadow-sm"
@@ -133,7 +134,7 @@ const StudentWarnings: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {resolvedWarnings.map(w => (
+                {resolvedWarnings.map((w: Warning) => (
                   <tr key={w.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 font-medium text-gray-900">
                       {w.title}
@@ -143,7 +144,9 @@ const StudentWarnings: React.FC = () => {
                         {w.level}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-gray-600">{w.date}</td>
+                    <td className="px-6 py-4 text-gray-600">
+                      {moment(w.createdAt).format("YYYY-MM-DD")}
+                    </td>
                     <td className="px-6 py-4">
                       <span className="flex items-center gap-2 text-green-600 text-sm">
                         <CheckCircle className="w-4 h-4" />
