@@ -126,8 +126,7 @@ export const StudentProvider = ({ children }: { children: ReactNode }) => {
         try {
             await markAsRead(notificationId);
             
-            // Refetch notifications after marking as read
-            fetchNotifications();
+            // // Refetch notifications after marking as read
         } catch (err: any) {
             toast.error(err?.response?.data.message ?? "Failed to mark notification as read");
         } finally {
@@ -140,8 +139,6 @@ export const StudentProvider = ({ children }: { children: ReactNode }) => {
         setLoading(true);
         try {
             await markAsReadAll();
-            // Refetch notifications after marking all as read
-            fetchNotifications();
         } catch (err: any) {
             toast.error(err?.response?.data.message ?? "Failed to mark all notifications as read");
         } finally {
@@ -175,6 +172,11 @@ export const StudentProvider = ({ children }: { children: ReactNode }) => {
         fetchStudentWarnings();
         fetchNotifications();
     }, []);
+
+    useEffect(() => {
+    //   fetchNotifications()
+    }, [notifications])
+    
 
     return (
         <StudentContext.Provider

@@ -223,11 +223,9 @@ export const getStudentProgressService = async (studentId: string) => {
 
   const taskStats = {
     totalTasks: assignments.length,
-    completed: 0,
     pending: 0,
     submitted: 0,
     approved: 0,
-    rejected: 0,
   };
 
   assignments.forEach((assignment) => {
@@ -240,10 +238,6 @@ export const getStudentProgressService = async (studentId: string) => {
         break;
       case TaskStatus.APPROVED:
         taskStats.approved += 1;
-        taskStats.completed += 1;
-        break;
-      case TaskStatus.REJECTED:
-        taskStats.rejected += 1;
         break;
       default:
         break;
@@ -264,7 +258,7 @@ export const getStudentProgressService = async (studentId: string) => {
   // Calculate completion percentage
   const completionPercentage =
     taskStats.totalTasks > 0
-      ? (taskStats.completed / taskStats.totalTasks) * 100
+      ? (taskStats.submitted / taskStats.totalTasks) * 100
       : 0;
 
   return {
