@@ -8,6 +8,7 @@ import {
   List,
   ChevronRight,
   Play,
+  Layers,
 } from "lucide-react";
 import { useStudent } from "../../../context/StudentContext";
 
@@ -47,8 +48,8 @@ const ProgressIndicator: React.FC = () => {
   // const tasks: Task[] = mockTasks;
   const { progressReport } = useStudent()
 
-const completed = progressReport?.taskStats?.completed ?? 0;
-const inProgress = progressReport?.taskStats?.approved ?? 0;
+const completed = progressReport?.taskStats?.submitted ?? 0;
+const totalTask = progressReport?.taskStats?.totalTasks ?? 0;
 const pending = progressReport?.taskStats?.pending ?? 0;
 
   const progressPercent = progressReport?.completionPercentage ?? 0
@@ -100,16 +101,16 @@ const pending = progressReport?.taskStats?.pending ?? 0;
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <StatCard
+            label="Total Task"
+            value={totalTask}
+            icon={<Layers className="text-indigo-600 w-5 h-5" />}
+            bg="bg-indigo-100"
+          />
+          <StatCard
             label="Completed"
             value={completed}
             icon={<CheckCircle className="text-green-600 w-5 h-5" />}
             bg="bg-green-100"
-          />
-          <StatCard
-            label="In Progress"
-            value={inProgress}
-            icon={<Play className="text-indigo-600 w-5 h-5" />}
-            bg="bg-indigo-100"
           />
           <StatCard
             label="Pending"
@@ -209,8 +210,7 @@ const TaskRow = ({ task }: { task: Task }) => {
 
         <div>
           <h3 className="font-semibold text-gray-900">{task.title}</h3>
-          <p className="text-sm text-gray-500">Task ID: {task.task_id}</p>
-
+          <p className="text-sm text-gray-500">Task ID: {task.course_id}</p>
         </div>
       </div>
 

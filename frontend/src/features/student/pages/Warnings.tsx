@@ -8,20 +8,19 @@ import {
 } from "lucide-react";
 import { useStudent } from "../../../context/StudentContext";
 import moment from "moment";
-import type { Warning } from "../types";
+import type { Warning } from "../../auth/types/warning";
+
+/* ---------------- MOCK DATA (replace with API later) ---------------- */
+
+
+
+/* ---------------- COMPONENT ---------------- */
 
 const StudentWarnings: React.FC = () => {
-  const { warning } = useStudent();
+  const {warning} = useStudent()
 
-  const activeWarnings: Warning[] =
-    warning?.warnings?.filter(
-      (w: Warning) => w.status === "ACTIVE"
-    ) ?? [];
-
-  const resolvedWarnings: Warning[] =
-    warning?.warnings?.filter(
-      (w: Warning) => w.status === "RESOLVED"
-    ) ?? [];
+  const activeWarnings = warning?.warnings?.filter(w => w.status === "ACTIVE");
+  const resolvedWarnings = warning?.warnings?.filter(w => w.status === "RESOLVED");
 
   return (
     <div className="bg-gray-50 p-4 md:p-8">
@@ -38,18 +37,18 @@ const StudentWarnings: React.FC = () => {
             </p>
           </div>
 
-          {activeWarnings.length > 0 && (
+          {activeWarnings && activeWarnings.length > 0 && (
             <div className="flex items-center gap-2 px-4 py-2 bg-red-50 border border-red-200 rounded-lg">
               <span className="w-2 h-2 bg-red-600 rounded-full" />
               <span className="text-sm font-medium text-red-600">
-                {activeWarnings.length} Active Warning(s)
+                {activeWarnings?.length} Active Warning
               </span>
             </div>
           )}
         </div>
 
         {/* Active Warnings */}
-        {activeWarnings.length > 0 && (
+        {activeWarnings && activeWarnings.length > 0 && (
           <section className="space-y-4">
             <div className="flex items-center gap-2">
               <AlertCircle className="w-5 h-5 text-red-600" />
@@ -86,8 +85,7 @@ const StudentWarnings: React.FC = () => {
                       <div className="flex flex-wrap gap-6 text-sm text-gray-500">
                         <span className="flex items-center gap-2">
                           <Calendar className="w-4 h-4" />
-                          Issued:{" "}
-                          {moment(warning.createdAt).format("YYYY-MM-DD")}
+                          Issued: {moment(warning.createdAt).format("YYYY-MM-DD")}
                         </span>
                         <span className="flex items-center gap-2">
                           <User className="w-4 h-4" />

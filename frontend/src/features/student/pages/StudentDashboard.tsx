@@ -1,27 +1,52 @@
 import React, { useState } from 'react';
-import { Code, Link2, Lock, ChevronRight, Bookmark, HelpCircle, FileText, ExternalLink, Moon, Menu } from 'lucide-react';
+import { Code, Link2, ChevronRight, Bookmark, HelpCircle, FileText, ExternalLink, Moon, Menu } from 'lucide-react';
 import ProgressIndicator from './ProgressIndicator';
 import  Warnings  from '../pages/Warnings';
 import Notifications from './Notifications';
 
 import StudentSidebar from '../components/StudentSidebar';
+import { useStudent } from '../../../context/StudentContext';
+import { submitTask } from '../../../api/studentApi';
+import toast from 'react-hot-toast';
 
 const CourseModulePage: React.FC = () => {
-  const [selectedTask, setSelectedTask] = useState<number>(1);
+  const [selectedTask, setSelectedTask] = useState<string>();
   const [currentSection, setCurrentSection] = useState<'overview' | 'progress' | 'warnings' | 'notifications'>('overview');
   const [sidebarOpen, setSidebarOpen]= useState(false);
+  const [githubLink, setGithubLink] = useState("")
 
-  const tasks = [
-    { id: 1, title: 'Task 1', subtitle: 'HTML Structure Basics', locked: false },
-    { id: 2, title: 'Task 2', subtitle: 'CSS Styling', locked: false },
-    { id: 3, title: 'Task 3', subtitle: 'Responsive Layouts', locked: false },
-    { id: 4, title: 'Task 4', subtitle: 'JavaScript Intro', locked: true },
-  ];
+  // const tasks = [
+  //   { id: 1, title: 'Task 1', subtitle: 'HTML Structure Basics', locked: false },
+  //   { id: 2, title: 'Task 2', subtitle: 'CSS Styling', locked: false },
+  //   { id: 3, title: 'Task 3', subtitle: 'Responsive Layouts', locked: false },
+  //   { id: 4, title: 'Task 4', subtitle: 'JavaScript Intro', locked: true },
+  // ];
 
-  const handleTaskClick = (taskId: number, isLocked: boolean) => {
-    if (!isLocked) {
+  const {tasks} = useStudent()
+
+  const handleTaskClick = (taskId: string) => {
+   
       setSelectedTask(taskId);
       console.log('Task clicked:', taskId);
+    
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+  
+    if (!selectedTask || !githubLink) {
+      alert("Please select a task and enter the GitHub link.");
+      return;
+    }
+  
+    try {
+      // Call the context function instead of direct API
+      await submitTask(selectedTask, githubLink);
+      setGithubLink(""); // clear input after successful submission
+      toast.success("Task submitted successfully!");
+    } catch (error:any) {
+      console.error(error);
+      toast.error(error?.response?.data.message ?? "Failed to submit task");
     }
   };
   
@@ -94,35 +119,32 @@ const CourseModulePage: React.FC = () => {
               </div>
 
               <div className="space-y-3">
-                {tasks.map((task) => (
+                {tasks?.map((task) => (
                   <button
-                    key={task.id}
-                    onClick={() => handleTaskClick(task.id, task.locked)}
-                    disabled={task.locked}
-                    className={`w-full flex items-center justify-between p-4 border-2 rounded-xl transition-all ${
-                      task.locked
-                        ? 'bg-gray-50 border-gray-200 cursor-not-allowed opacity-60'
-                        : selectedTask === task.id
+                    key={task.task_id}
+                    onClick={() => handleTaskClick(task.task_id)}
+                    // disabled={task.locked}
+                    className={`w-full flex items-center justify-between p-4 border-2 rounded-xl transition-all ${ selectedTask === task.task_id
                         ? 'bg-indigo-50 border-indigo-500'
                         : 'bg-white border-indigo-200 hover:border-indigo-400 hover:bg-indigo-50'
                     }`}
                   >
                     <div className="flex items-center gap-4">
-                      {task.locked && (
+                      {/* {task.locked && (
                         <Lock className="w-5 h-5 text-gray-400 flex-shrink-0" />
-                      )}
+                      )} */}
                       <div className="text-left">
-                        <h3 className={`font-bold mb-0.5 ${task.locked ? 'text-gray-400' : 'text-indigo-600'}`}>
-                          {task.title}
+                        <h3 className={`font-bold mb-0.5 text-indigo-600`}>
+                          {task.task.title}
                         </h3>
-                        <p className={`text-sm ${task.locked ? 'text-gray-400' : 'text-gray-600'}`}>
-                          {task.subtitle}
+                        <p className={`text-sm text-gray-600`}>
+                          {task.task.description}
                         </p>
                       </div>
                     </div>
-                    {!task.locked && (
+                    {/* {!task.locked && (
                       <ChevronRight className="w-5 h-5 text-indigo-600" />
-                    )}
+                    )} */}
                   </button>
                 ))}
               </div>
@@ -183,11 +205,13 @@ const CourseModulePage: React.FC = () => {
                   </div>
 
                   <div className="border-t border-gray-200 pt-6">
-                    <h3 className="font-semibold text-gray-900 mb-3">Upload Task 1 Github Link</h3>
-                    <div className="flex gap-3">
+                    <h3 className="font-semibold text-gray-900 mb-3">Upload Task: Github Link</h3>
+                    <form onSubmit={(e)=>handleSubmit(e)} className="flex gap-3">
                       <div className="flex-1 relative">
                         <Link2 className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                         <input
+                          onChange={(e)=>setGithubLink(e.target.value)}
+                          value={githubLink}
                           type="text"
                           placeholder="https://github.com/username/repo"
                           className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
@@ -197,7 +221,7 @@ const CourseModulePage: React.FC = () => {
                         Submit
                         <ChevronRight className="w-4 h-4" />
                       </button>
-                    </div>
+                    </form>
                     <p className="text-xs text-gray-500 mt-2">* Ensure the repository is public before submitting.</p>
                   </div>
                 </div>

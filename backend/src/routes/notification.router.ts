@@ -8,5 +8,7 @@ router.use(protect);
 
 router.get("/", getNotifications);
 router.post("/", restrictTo('MENTOR'), sendNotification); 
+router.put("/:notificationId/read", markNotificationAsRead);
+router.put("/read/all", markAllAsRead);
 
 export default router;
