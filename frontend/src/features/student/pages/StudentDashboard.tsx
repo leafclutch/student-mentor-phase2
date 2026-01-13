@@ -77,6 +77,7 @@ const CourseModulePage: React.FC = () => {
       return;
     }
 
+
     try {
       await submitStudentTask(selectedTask, authUser.id, githubLink);
       setGithubLink("");
@@ -93,6 +94,11 @@ const CourseModulePage: React.FC = () => {
         currentSection={currentSection}
         setCurrentSection={setCurrentSection}
       />
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        currentSection={currentSection}
+        setCurrentSection={setCurrentSection}
+      />
 
       <div className="flex-1 overflow-auto">
         <div className="bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between sticky top-0 z-10">
@@ -102,10 +108,18 @@ const CourseModulePage: React.FC = () => {
           >
             <Menu size={24} />
           </button>
+            onClick={() => setSidebarOpen(true)}
+            className="lg:hidden p-2 rounded-lg hover:bg-gray-100"
+          >
+            <Menu size={24} />
+          </button>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
               <Code className="w-5 h-5 text-white" />
             </div>
+            <h1 className="text-xl font-bold text-gray-900">
+              Web Development Course
+            </h1>
             <h1 className="text-xl font-bold text-gray-900">
               Web Development Course
             </h1>
@@ -282,6 +296,8 @@ const CourseModulePage: React.FC = () => {
               </div>
             </>
           )}
+            </>
+          )}
 
           {currentSection === "progress" && <ProgressIndicator />}
           {currentSection === "warnings" && <Warnings />}
@@ -289,7 +305,9 @@ const CourseModulePage: React.FC = () => {
         </div>
       </div>
     </div>
+    </div>
   );
 };
 
 export default CourseModulePage;
+
