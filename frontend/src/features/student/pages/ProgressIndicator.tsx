@@ -1,5 +1,4 @@
 import React from "react";
-import type { Task } from "../types";
 import {
   CheckCircle,
   Clock,
@@ -12,47 +11,23 @@ import {
 } from "lucide-react";
 import { useStudent } from "../../../context/StudentContext";
 
-/* ---------------- MOCK DATA (replace with API later) ---------------- */
+/* ---------------- TYPES ---------------- */
 
-// const mockTasks: Task[] = [
-//   {
-//     task_id: 1,
-//     title: "HTML Basics",
-//     status: "completed",
-//   },
-//   {
-//     task_id: 2,
-//     title: "CSS Fundamentals",
-//     status: "completed",
-//   },
-//   {
-//     task_id: 3,
-//     title: "Responsive Design",
-//     status: "in_progress",
-//   },
-//   {
-//     task_id: 4,
-//     title: "JavaScript Basics",
-//     status: "pending",
-//   },
-//   {
-//     task_id: 5,
-//     title: "React Introduction",
-//     status: "pending",
-//   },
-// ];
+interface Course {
+  course_id: number | string;
+  title: string;
+  status: "completed" | "in_progress" | "pending";
+}
 
 /* ---------------- COMPONENT ---------------- */
 
 const ProgressIndicator: React.FC = () => {
-  // const tasks: Task[] = mockTasks;
-  const { progressReport } = useStudent()
+  const { progressReport } = useStudent();
 
-const completed = progressReport?.taskStats?.submitted ?? 0;
-const totalTask = progressReport?.taskStats?.totalTasks ?? 0;
-const pending = progressReport?.taskStats?.pending ?? 0;
-
-  const progressPercent = progressReport?.completionPercentage ?? 0
+  const completed = progressReport?.taskStats?.submitted ?? 0;
+  const totalTask = progressReport?.taskStats?.totalTasks ?? 0;
+  const pending = progressReport?.taskStats?.pending ?? 0;
+  const progressPercent = progressReport?.completionPercentage ?? 0;
 
   return (
     <div className="bg-gray-50 p-4 md:p-8">
@@ -144,9 +119,11 @@ const pending = progressReport?.taskStats?.pending ?? 0;
           </div>
 
           <div className="space-y-4">
-            {progressReport?.courses.map((course:any) => (
+            {(progressReport?.courses as unknown as Course[])?.map((course) => (
               <TaskRow key={course.course_id} task={course} />
-            ))}
+            )) ?? (
+              <p className="text-gray-500 text-center py-4">No modules found.</p>
+            )}
           </div>
         </div>
       </div>
@@ -180,7 +157,7 @@ const StatCard = ({
   </div>
 );
 
-const TaskRow = ({ task }: { task: Task }) => {
+const TaskRow = ({ task }: { task: Course }) => {
   const statusMap = {
     completed: {
       label: "Completed",
@@ -190,7 +167,7 @@ const TaskRow = ({ task }: { task: Task }) => {
     in_progress: {
       label: "In Progress",
       badge: "bg-indigo-100 text-indigo-700",
-      icon: <Play className="w-5 h-5 text-indigo-600" />,
+      icon: <Play className="text-indigo-600 w-5 h-5" />,
     },
     pending: {
       label: "Pending",
@@ -199,13 +176,13 @@ const TaskRow = ({ task }: { task: Task }) => {
     },
   };
 
-  const status = statusMap[task.status];
+  const status = statusMap[task.status] || statusMap.pending;
 
   return (
     <div className="flex items-center justify-between p-4 border rounded-xl hover:shadow transition">
       <div className="flex items-center gap-4">
         <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-          {status?.icon}
+          {status.icon}
         </div>
 
         <div>
@@ -215,8 +192,8 @@ const TaskRow = ({ task }: { task: Task }) => {
       </div>
 
       <div className="flex items-center gap-4">
-        <span className={`px-4 py-1.5 rounded-lg text-sm font-medium ${status?.badge}`}>
-          {status?.label}
+        <span className={`px-4 py-1.5 rounded-lg text-sm font-medium ${status.badge}`}>
+          {status.label}
         </span>
         <ChevronRight className="w-5 h-5 text-gray-400" />
       </div>

@@ -1,4 +1,4 @@
-import React, { useState, type JSX } from 'react';
+import React, { useState, type JSX } from "react";
 import {
   AlertTriangle,
   SlidersHorizontal,
@@ -6,18 +6,20 @@ import {
   Send,
   Bell,
   BookOpen,
-} from 'lucide-react';
-import { useStudent } from '../../../context/StudentContext';
-import moment from 'moment';
-import type { NotificationType } from '../../auth/types/notification';
-import { markAsRead, markAsReadAll } from '../../../api/studentApi';
+} from "lucide-react";
+import { useStudent } from "../../../context/StudentContext";
+import moment from "moment";
+import type { NotificationType } from "../../auth/types/notification";
+import { markAsRead, markAsReadAll } from "../../../api/studentApi";
 
 const Notifications: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'all' | 'unread' | 'read' | 'system'>('all');
+  const [activeTab, setActiveTab] = useState<
+    "all" | "unread" | "read" | "system"
+  >("all");
 
-  const { notifications } = useStudent()
+  const { notifications } = useStudent();
 
-  const iconMap:Record<NotificationType, JSX.Element> = {
+  const iconMap: Record<NotificationType, JSX.Element> = {
     TASK_ASSIGNED: <ClipboardCheck className="text-blue-500" />,
     WARNING_ISSUED: <AlertTriangle className="text-red-500" />,
     SYSTEM_ANNOUNCEMENT: <Bell className="text-purple-500" />,
@@ -25,13 +27,10 @@ const Notifications: React.FC = () => {
     COURSE_CREATED: <BookOpen className="text-indigo-500" />,
   };
 
-  const handleReadAll = async (e:React.MouseEvent) =>{
+  const handleReadAll = async (e: React.MouseEvent) => {
     e.preventDefault();
-    await markAsReadAll()
-  }
-  
-
-  
+    await markAsReadAll();
+  };
 
   return (
     <div className="bg-gray-50 p-4 sm:p-6 lg:p-8">
@@ -49,8 +48,9 @@ const Notifications: React.FC = () => {
 
           <div className="flex gap-3">
             <button
-            onClick={(e)=>handleReadAll(e)}
-            className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 font-medium">
+              onClick={(e) => handleReadAll(e)}
+              className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 font-medium"
+            >
               Mark all as read
             </button>
             <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm font-medium text-gray-700 flex items-center gap-2">
@@ -62,22 +62,24 @@ const Notifications: React.FC = () => {
 
         {/* Tabs */}
         <div className="flex gap-6 border-b border-gray-200 mb-6 overflow-x-auto">
-          {(['all', 'unread', 'read', 'system'] as const).map((tab) => (
+          {(["all", "unread", "read", "system"] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`pb-3 font-medium capitalize whitespace-nowrap relative ${activeTab === tab
-                  ? 'text-indigo-600'
-                  : 'text-gray-600 hover:text-gray-900'
-                }`}
+              className={`pb-3 font-medium capitalize whitespace-nowrap relative ${
+                activeTab === tab
+                  ? "text-indigo-600"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
             >
               {tab}
-              {tab === 'unread' && notifications?.filter(n => !n.isRead).length >= 1 && (
-                <span className="ml-2 px-2 py-0.5 bg-red-100 text-red-600 text-xs rounded-full">
-                  {/* Show unread notifications count */}
-                  {notifications?.filter(n => !n.isRead).length}
-                </span>
-              )}
+              {tab === "unread" &&
+                (notifications?.filter((n) => !n.isRead).length ?? 0) >= 1 && (
+                  <span className="ml-2 px-2 py-0.5 bg-red-100 text-red-600 text-xs rounded-full">
+                    {/* Show unread notifications count */}
+                    {notifications?.filter((n) => !n.isRead).length}
+                  </span>
+                )}
               {activeTab === tab && (
                 <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600" />
               )}
@@ -119,10 +121,11 @@ const Notifications: React.FC = () => {
             {/* Overdue */}
             {notifications
               ?.filter((n) => {
-                if (activeTab === 'all') return true;
-                if (activeTab === 'unread') return !n.isRead;
-                if (activeTab === 'read') return n.isRead;
-                if (activeTab === 'system') return n.type === 'SYSTEM_ANNOUNCEMENT';
+                if (activeTab === "all") return true;
+                if (activeTab === "unread") return !n.isRead;
+                if (activeTab === "read") return n.isRead;
+                if (activeTab === "system")
+                  return n.type === "SYSTEM_ANNOUNCEMENT";
                 return true;
               })
               .map((n) => (
@@ -145,11 +148,10 @@ const Notifications: React.FC = () => {
                   description={n.message}
                   time={moment(n.createdAt).fromNow()}
                   highlight={!n.isRead}
-                  notificationId = {n.id}
+                  notificationId={n.id}
                   danger={n.type === "WARNING_ISSUED"}
                 />
               ))}
-
           </div>
         </div>
 
@@ -214,20 +216,21 @@ const NotificationCard: React.FC<CardProps> = ({
   danger,
   actions,
 }) => {
-  
-  const handleRead = async (e:React.MouseEvent)=>{
+  const handleRead = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    await markAsRead(notificationId)
-  }
+    await markAsRead(notificationId);
+  };
 
   return (
-    <div onClick={(e)=>handleRead(e)}
-      className={`rounded-xl cursor-pointer p-5 shadow-sm hover:shadow-md transition ${danger
-          ? 'bg-red-50 border-l-4 border-red-500'
+    <div
+      onClick={(e) => handleRead(e)}
+      className={`rounded-xl cursor-pointer p-5 shadow-sm hover:shadow-md transition ${
+        danger
+          ? "bg-red-50 border-l-4 border-red-500"
           : highlight
-            ? 'bg-white border-l-4 border-indigo-500'
-            : 'bg-white'
-        }`}
+          ? "bg-white border-l-4 border-indigo-500"
+          : "bg-white"
+      }`}
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex gap-4">
