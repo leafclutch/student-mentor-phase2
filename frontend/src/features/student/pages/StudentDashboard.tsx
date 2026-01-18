@@ -51,13 +51,18 @@ const CourseModulePage: React.FC = () => {
 
   const {
     tasks,
+    progressReport,
     submitStudentTask,
     loading: tasksLoading,
     unreadCount,
   } = useStudent();
+
   const { authUser } = useAuth();
 
   const activeTask = tasks?.find((t) => t.task_id === selectedTask);
+
+  // Getting the live link from the first course in the progress report
+  const liveClassLink = progressReport?.courses?.[0]?.url;
 
   const handleTaskClick = (taskId: string) => {
     setSelectedTask(taskId);
@@ -77,12 +82,12 @@ const CourseModulePage: React.FC = () => {
       return;
     }
 
-
     try {
       await submitStudentTask(selectedTask, authUser.id, githubLink);
       setGithubLink("");
     } catch (err: unknown) {
       console.error("Submission error:", err);
+      toast.error("Submission failed. ok.");
     }
   };
 
@@ -94,20 +99,11 @@ const CourseModulePage: React.FC = () => {
         currentSection={currentSection}
         setCurrentSection={setCurrentSection}
       />
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-        currentSection={currentSection}
-        setCurrentSection={setCurrentSection}
-      />
 
       <div className="flex-1 overflow-auto">
+        {/* Header */}
         <div className="bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between sticky top-0 z-10">
           <button
-            onClick={() => setSidebarOpen(true)}
-            className="lg:hidden p-2 rounded-lg hover:bg-gray-100"
-          >
-            <Menu size={24} />
-          </button>
             onClick={() => setSidebarOpen(true)}
             className="lg:hidden p-2 rounded-lg hover:bg-gray-100"
           >
@@ -118,10 +114,7 @@ const CourseModulePage: React.FC = () => {
               <Code className="w-5 h-5 text-white" />
             </div>
             <h1 className="text-xl font-bold text-gray-900">
-              Web Development Course
-            </h1>
-            <h1 className="text-xl font-bold text-gray-900">
-              Web Development Course
+              {progressReport?.courses?.[0]?.title || "My Course"}
             </h1>
           </div>
           <div className="flex items-center gap-4">
@@ -146,6 +139,7 @@ const CourseModulePage: React.FC = () => {
         <div className="p-4">
           {currentSection === "overview" && (
             <>
+              {/* Class Link Banner */}
               <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-6 mb-8 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
@@ -155,29 +149,44 @@ const CourseModulePage: React.FC = () => {
                     <h3 className="font-bold text-gray-900 mb-1">
                       Live Class Link
                     </h3>
-                    <p className="text-sm text-gray-600">
-                      course-url.com/meet/xyz-abc
+                    <p className="text-sm text-gray-600 font-mono">
+                      {liveClassLink || "No meeting link scheduled yet. ok."}
                     </p>
                   </div>
                 </div>
-                <button className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors flex items-center gap-2">
+
+                <button
+                  onClick={() => {
+                    if (liveClassLink) {
+                      const url = liveClassLink.startsWith("http")
+                        ? liveClassLink
+                        : `https://${liveClassLink}`;
+                      window.open(url, "_blank");
+                    } else {
+                      toast.error("No link available to open.");
+                    }
+                  }}
+                  disabled={!liveClassLink}
+                  className={`px-6 py-2.5 font-medium rounded-lg transition-colors flex items-center gap-2 ${
+                    liveClassLink
+                      ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
+                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  }`}
+                >
                   Go to URL
                   <ExternalLink className="w-4 h-4" />
                 </button>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* Left: Task List */}
                 <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-2xl font-bold text-gray-900">
-                      Task List
-                    </h2>
-                  </div>
-
+                  <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                    Task List
+                  </h2>
                   <div className="space-y-3">
                     {tasksLoading ? (
                       <>
-                        <SkeletonTask />
                         <SkeletonTask />
                         <SkeletonTask />
                         <SkeletonTask />
@@ -193,23 +202,21 @@ const CourseModulePage: React.FC = () => {
                               : "bg-white border-indigo-200 hover:border-indigo-400"
                           }`}
                         >
-                          <div className="flex items-center gap-4 w-full">
-                            <div className="text-left flex-1">
-                              <div className="flex items-center justify-between">
-                                <h3 className="font-bold mb-0.5 text-indigo-600">
-                                  {task.task.title}
-                                </h3>
-                                {task.status === "COMPLETED" && (
-                                  <CheckCircle
-                                    size={16}
-                                    className="text-green-500"
-                                  />
-                                )}
-                              </div>
-                              <p className="text-sm text-gray-600 line-clamp-1">
-                                {task.task.description}
-                              </p>
+                          <div className="text-left flex-1">
+                            <div className="flex items-center justify-between">
+                              <h3 className="font-bold mb-0.5 text-indigo-600">
+                                {task.task.title}
+                              </h3>
+                              {task.status === "APPROVED" && (
+                                <CheckCircle
+                                  size={16}
+                                  className="text-green-500"
+                                />
+                              )}
                             </div>
+                            <p className="text-sm text-gray-600 line-clamp-1">
+                              {task.task.description}
+                            </p>
                           </div>
                         </button>
                       ))
@@ -217,85 +224,71 @@ const CourseModulePage: React.FC = () => {
                   </div>
                 </div>
 
+                {/* Right: Task Details */}
                 <div>
                   {tasksLoading ? (
                     <SkeletonDetails />
-                  ) : (
+                  ) : activeTask ? (
                     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden sticky top-24">
-                      {activeTask ? (
-                        <>
-                          <div className="bg-indigo-50 px-6 py-4 border-b border-indigo-100">
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs font-semibold text-indigo-600 uppercase tracking-wider">
-                                Status: {activeTask.status}
-                              </span>
-                            </div>
-                            <h2 className="text-2xl font-bold text-gray-900 mt-2">
-                              {activeTask.task.title}
-                            </h2>
-                          </div>
+                      <div className="bg-indigo-50 px-6 py-4 border-b border-indigo-100">
+                        <span className="text-xs font-semibold text-indigo-600 uppercase">
+                          Status: {activeTask.status}
+                        </span>
+                        <h2 className="text-2xl font-bold text-gray-900 mt-2">
+                          {activeTask.task.title}
+                        </h2>
+                      </div>
+                      <div className="p-6">
+                        <h3 className="text-lg font-bold text-gray-900 mb-3">
+                          Description
+                        </h3>
+                        <p className="text-gray-600 leading-relaxed mb-6">
+                          {activeTask.task.description}
+                        </p>
 
-                          <div className="p-6">
-                            <h3 className="text-lg font-bold text-gray-900 mb-3">
-                              Description
-                            </h3>
-                            <p className="text-gray-600 leading-relaxed mb-6">
-                              {activeTask.task.description}
-                            </p>
-
-                            <div className="border-t border-gray-200 pt-6">
-                              {activeTask.status === "PENDING" ? (
-                                <>
-                                  <h3 className="font-semibold text-gray-900 mb-3">
-                                    Upload Task: Github Link
-                                  </h3>
-                                  <form
-                                    onSubmit={handleSubmit}
-                                    className="flex gap-3"
-                                  >
-                                    <div className="flex-1 relative">
-                                      <Link2 className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                      <input
-                                        onChange={(e) =>
-                                          setGithubLink(e.target.value)
-                                        }
-                                        value={githubLink}
-                                        type="text"
-                                        placeholder="https://github.com/username/repo"
-                                        className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                                      />
-                                    </div>
-                                    <button className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors flex items-center gap-2">
-                                      Submit
-                                      <ChevronRight className="w-4 h-4" />
-                                    </button>
-                                  </form>
-                                </>
-                              ) : (
-                                <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-green-700 flex items-center gap-2">
-                                  <CheckCircle size={20} />
-                                  <div>
-                                    <p className="font-bold">Task Submitted</p>
-                                    <p className="text-sm opacity-90">
-                                      Waiting for review. ok.
-                                    </p>
-                                  </div>
-                                </div>
-                              )}
+                        <div className="border-t border-gray-200 pt-6">
+                          {activeTask.status === "PENDING" || activeTask.status === "REJECTED" ? (
+                            <form
+                              onSubmit={handleSubmit}
+                              className="flex gap-3"
+                            >
+                              <div className="flex-1 relative">
+                                <Link2 className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                <input
+                                  onChange={(e) =>
+                                    setGithubLink(e.target.value)
+                                  }
+                                  value={githubLink}
+                                  type="text"
+                                  placeholder="https://github.com/username/repo"
+                                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                />
+                              </div>
+                              <button className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg flex items-center gap-2">
+                                Submit <ChevronRight className="w-4 h-4" />
+                              </button>
+                            </form>
+                          ) : (
+                            <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-green-700 flex items-center gap-2">
+                              <CheckCircle size={20} />
+                              <div>
+                                <p className="font-bold">Task {activeTask.status}</p>
+                                <p className="text-sm opacity-90">
+                                  {activeTask.status === "SUBMITTED" ? "Waiting for review. ok." : "Great job!"}
+                                </p>
+                              </div>
                             </div>
-                          </div>
-                        </>
-                      ) : (
-                        <div className="p-20 text-center text-gray-400">
-                          Select a task to view details and submit.
+                          )}
                         </div>
-                      )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-20 text-center text-gray-400">
+                      Select a task to view details.
                     </div>
                   )}
                 </div>
               </div>
-            </>
-          )}
             </>
           )}
 
@@ -305,9 +298,7 @@ const CourseModulePage: React.FC = () => {
         </div>
       </div>
     </div>
-    </div>
   );
 };
 
 export default CourseModulePage;
-

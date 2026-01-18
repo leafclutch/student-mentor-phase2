@@ -13,16 +13,24 @@ const Login = () => {
   const navigate = useNavigate();
   const { login: authLogin } = useAuth();
 
+  // Inside src/features/auth/pages/Login.tsx
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
     try {
       const response = await loginApi({ userId, password });
+
+      const displayName =
+        response.user.name ||
+        (response.user.role === "MENTOR" ? "Mentor User" : "Student User");
+
       authLogin({
         id: response.user.user_id,
         role: response.user.role,
         token: response.token,
+        name: displayName,
       });
 
       if (response.user.role === "STUDENT") {

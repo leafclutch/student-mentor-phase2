@@ -10,14 +10,7 @@ import {
   Layers,
 } from "lucide-react";
 import { useStudent } from "../../../context/StudentContext";
-
-/* ---------------- TYPES ---------------- */
-
-interface Course {
-  course_id: number | string;
-  title: string;
-  status: "completed" | "in_progress" | "pending";
-}
+import type { Course } from "../../auth/types/student";
 
 /* ---------------- COMPONENT ---------------- */
 
@@ -32,7 +25,6 @@ const ProgressIndicator: React.FC = () => {
   return (
     <div className="bg-gray-50 p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-8">
-
         {/* Page Title */}
         <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
           Progress Indicator
@@ -44,7 +36,7 @@ const ProgressIndicator: React.FC = () => {
             <div>
               <h2 className="text-lg font-semibold uppercase tracking-wide">
                 Course Completion
-              </h2>
+              </h2> 
               <p className="text-indigo-100 text-sm mt-1">
                 Overall progress based on completed tasks
               </p>
@@ -119,9 +111,12 @@ const ProgressIndicator: React.FC = () => {
           </div>
 
           <div className="space-y-4">
-            {(progressReport?.courses as unknown as Course[])?.map((course) => (
-              <TaskRow key={course.course_id} task={course} />
-            )) ?? (
+            {/* Logic: Mapping directly over the array. ok. */}
+            {progressReport?.courses && Array.isArray(progressReport.courses) ? (
+              progressReport.courses.map((course: Course) => (
+                <TaskRow key={course.course_id} course={course} progress={progressPercent} />
+              ))
+            ) : (
               <p className="text-gray-500 text-center py-4">No modules found.</p>
             )}
           </div>
@@ -130,8 +125,6 @@ const ProgressIndicator: React.FC = () => {
     </div>
   );
 };
-
-export default ProgressIndicator;
 
 /* ---------- Helper Components ---------- */
 
@@ -157,7 +150,10 @@ const StatCard = ({
   </div>
 );
 
-const TaskRow = ({ task }: { task: Course }) => {
+const TaskRow = ({ course, progress }: { course: Course; progress: number }) => {
+  // Street-smart fallback: If no status from backend, infer from progress %
+  const currentStatus = progress === 100 ? "completed" : progress > 0 ? "in_progress" : "pending";
+
   const statusMap = {
     completed: {
       label: "Completed",
@@ -167,7 +163,7 @@ const TaskRow = ({ task }: { task: Course }) => {
     in_progress: {
       label: "In Progress",
       badge: "bg-indigo-100 text-indigo-700",
-      icon: <Play className="text-indigo-600 w-5 h-5" />,
+      icon: <Play className="w-5 h-5 text-indigo-600" />,
     },
     pending: {
       label: "Pending",
@@ -176,27 +172,26 @@ const TaskRow = ({ task }: { task: Course }) => {
     },
   };
 
-  const status = statusMap[task.status] || statusMap.pending;
+  const status = statusMap[currentStatus as keyof typeof statusMap];
 
   return (
     <div className="flex items-center justify-between p-4 border rounded-xl hover:shadow transition">
       <div className="flex items-center gap-4">
         <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-          {status.icon}
+          {status?.icon}
         </div>
 
         <div>
-          <h3 className="font-semibold text-gray-900">{task.title}</h3>
-          <p className="text-sm text-gray-500">Task ID: {task.course_id}</p>
+          <h3 className="font-semibold text-gray-900">{course.title}</h3>
+          <p className="text-sm text-gray-500">Course ID: {course.course_id}</p>
         </div>
       </div>
 
       <div className="flex items-center gap-4">
-        <span className={`px-4 py-1.5 rounded-lg text-sm font-medium ${status.badge}`}>
-          {status.label}
-        </span>
         <ChevronRight className="w-5 h-5 text-gray-400" />
       </div>
     </div>
   );
 };
+
+export default ProgressIndicator;
