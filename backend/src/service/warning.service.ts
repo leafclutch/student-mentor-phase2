@@ -1,22 +1,24 @@
 import prisma from "../connect/index";
 import { AppError } from "../utils/apperror";
-import { WarningLevel } from "@prisma/client";
+import { WarningLevel, WarningStatus } from "@prisma/client";
 
 interface IssueWarningPayload {
   student_id: string;
   title: string;
   remark: string;
+  title: string;
   level: WarningLevel;
+  status: WarningStatus
 }
 
 export const issueWarningService = async (
   mentorId: string,
   payload: IssueWarningPayload
 ) => {
-  const { student_id, title, remark, level } = payload;
+  const { student_id, title, remark, level, status } = payload;
 
-  if (!student_id || !title || !remark || !level) {
-    throw new AppError("student_id, title, remark and level are required", 400);
+  if (!student_id || !title || !remark || !level || !status) {
+    throw new AppError("student_id, title, remark, level and status are required", 400);
   }
 
   const isStudentAssignedToMentor = await prisma.mentorStudent.findFirst({
@@ -41,7 +43,8 @@ export const issueWarningService = async (
       title,
       remark,
       level,
-    },
+      status
+    }
   });
 
   const student = await prisma.student.update({
@@ -49,8 +52,7 @@ export const issueWarningService = async (
     data: {
       warning_count: {
         increment: 1,
-      },
-      warning_status: "ACTIVE",
+      }
     },
   });
 
@@ -58,67 +60,48 @@ export const issueWarningService = async (
 };
 
 export const getStudentWarningsService = async (
-  studentId: string,
-  requesterId: string,
-  requesterRole: string
+  userId: string
 ) => {
-  if (!studentId) {
-    throw new AppError("Student ID is required", 400);
-  }
-
-  // Check if student exists
+  // Check if the student exists by the given id (userId)
   const student = await prisma.student.findUnique({
-    where: { student_id: studentId },
+    where: { student_id: userId },
   });
 
   if (!student) {
     throw new AppError("Student not found", 404);
   }
 
-  // Authorization check
-  if (requesterRole === "STUDENT") {
-    // Students can only see their own warnings
-    if (requesterId !== studentId) {
-      throw new AppError("Access denied. You can only view your own warnings.", 403);
-    }
-  } else if (requesterRole === "MENTOR") {
-    // Mentors can only see warnings for students assigned to them
-    const isStudentAssignedToMentor = await prisma.mentorStudent.findFirst({
-      where: {
-        mentor_id: requesterId,
-        student_id: studentId,
-        isActive: true,
-      },
-    });
-
-    if (!isStudentAssignedToMentor) {
-      throw new AppError(
-        "Access denied. You can only view warnings for students assigned to you.",
-        403
-      );
-    }
-  } else {
-    throw new AppError("Access denied.", 403);
-  }
-
-  // Fetch warnings with mentor details
+  // Fetch all warnings only for this particular student
   const warnings = await prisma.warning.findMany({
-    where: { student_id: studentId },
+    where: { student_id: userId },
     include: {
       mentor: {
         select: {
           mentor_id: true,
           name: true,
-          photo: true,
-        },
-      },
+        }
+      }
     },
-    orderBy: {
-      createdAt: "desc",
-    },
+    orderBy: { createdAt: 'desc' },
   });
 
-  return warnings;
+  // Count warnings by status
+  const activeCount = await prisma.warning.count({
+    where: { student_id: userId, status: "ACTIVE" },
+  });
+
+  const resolvedCount = await prisma.warning.count({
+    where: { student_id: userId, status: "RESOLVED" }, // or RESOLVED if you use that
+  });
+
+  return {
+    warnings,
+    counts: {
+      active: activeCount,
+      resolved: resolvedCount,
+    },
+  }
+
 };
 
 
