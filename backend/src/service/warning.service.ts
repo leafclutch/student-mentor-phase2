@@ -4,6 +4,7 @@ import { WarningLevel } from "@prisma/client";
 
 interface IssueWarningPayload {
   student_id: string;
+  title: string;
   remark: string;
   level: WarningLevel;
 }
@@ -12,10 +13,10 @@ export const issueWarningService = async (
   mentorId: string,
   payload: IssueWarningPayload
 ) => {
-  const { student_id, remark, level } = payload;
+  const { student_id, title, remark, level } = payload;
 
-  if (!student_id || !remark || !level) {
-    throw new AppError("student_id, remark and level are required", 400);
+  if (!student_id || !title || !remark || !level) {
+    throw new AppError("student_id, title, remark and level are required", 400);
   }
 
   const isStudentAssignedToMentor = await prisma.mentorStudent.findFirst({
@@ -37,6 +38,7 @@ export const issueWarningService = async (
     data: {
       student_id,
       mentor_id: mentorId,
+      title,
       remark,
       level,
     },

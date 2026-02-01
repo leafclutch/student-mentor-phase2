@@ -37,6 +37,10 @@ enum NotificationType {
 }
 
 
+enum WarningStatus {
+  ACTIVE
+  RESOLVED
+}
 
 model User {
   user_id    String   @id // Format: 26STD0001 or 26MEN001
@@ -67,7 +71,7 @@ model Student {
 
   progress     Float   @default(0.0)
   warning_count Int    @default(0)
-  warning_status String? // e.g., "ACTIVE", "CLEARED"
+  warning_status WarningStatus? // e.g., "ACTIVE", "RESOLVED"
   
   
   mentorAssignments MentorStudent[] // Many-to-many with Mentor
@@ -188,9 +192,14 @@ model Warning {
   student    Student     @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
   mentor     Mentor      @relation("MentorWarnings", fields: [mentor_id], references: [mentor_id], onDelete: Cascade)
   
+  title      String
   remark     String      @db.Text
   level      WarningLevel
   
+  status          WarningStatus @default(ACTIVE)
+  student_comment String?       @db.Text
+  resolvedAt      DateTime?
+
   createdAt  DateTime    @default(now())
   
   @@index([student_id])
