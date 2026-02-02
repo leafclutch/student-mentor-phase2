@@ -3,10 +3,7 @@ import { AppError } from "../utils/apperror";
 import { TaskStatus, WarningLevel } from "@prisma/client";
 
 export const getStudentDashboardService = async (studentId: string) => {
-  if (!studentId) {
-    throw new AppError("Student ID is required", 400);
-  }
-
+  
   const student = await prisma.student.findUnique({
     where: { student_id: studentId },
     select: {
@@ -114,6 +111,13 @@ export const getStudentTasksService = async (studentId: string) => {
             select: {
               course_id: true,
               title: true,
+              url: true,
+              mentor_id: true,
+              mentor: {
+                select: {
+                  name: true
+                }
+              }
             },
           },
         },
@@ -168,6 +172,14 @@ export const submitStudentTaskService = async (
     throw new AppError("Task assignment not found for this student", 404);
   }
 
+  // Check if the task is already submitted and a github_link is already present in DB
+  if (
+    assignment.status === TaskStatus.SUBMITTED &&
+    assignment.github_link // optionally && assignment.github_link !== ""
+  ) {
+    throw new AppError("Task already submitted", 400);
+  }
+
   const updatedAssignment = await prisma.taskAssignment.update({
     where: {
       task_id_student_id: {
@@ -211,16 +223,24 @@ export const getStudentProgressService = async (studentId: string) => {
     where: { student_id: studentId },
     select: {
       status: true,
+      task: {
+        select: {
+          course: {
+            select: {
+              course_id: true,
+              title: true,
+            }
+          }
+        }
+      }
     },
   });
 
   const taskStats = {
     totalTasks: assignments.length,
-    completed: 0,
     pending: 0,
     submitted: 0,
     approved: 0,
-    rejected: 0,
   };
 
   assignments.forEach((assignment) => {
@@ -233,30 +253,31 @@ export const getStudentProgressService = async (studentId: string) => {
         break;
       case TaskStatus.APPROVED:
         taskStats.approved += 1;
-        taskStats.completed += 1;
-        break;
-      case TaskStatus.REJECTED:
-        taskStats.rejected += 1;
         break;
       default:
         break;
     }
   });
 
+  // Get unique courses where the student has assignments, including the title only
+  // Flatten all course objects from assignments, filter out null (if any assignment has no task/course)
+  const courseMap: Map<string, { course_id: string, title: string }> = new Map();
+  assignments.forEach((assignment) => {
+    if (assignment.task && assignment.task.course) {
+      const { course_id, title } = assignment.task.course;
+      courseMap.set(course_id, { course_id, title });
+    }
+  });
+  const courses = Array.from(courseMap.values());
+
   // Calculate completion percentage
   const completionPercentage =
     taskStats.totalTasks > 0
-      ? (taskStats.completed / taskStats.totalTasks) * 100
+      ? (taskStats.submitted / taskStats.totalTasks) * 100
       : 0;
 
   return {
-    student: {
-      student_id: student.student_id,
-      name: student.name,
-      progress: student.progress,
-      warning_count: student.warning_count,
-      warning_status: student.warning_status,
-    },
+    courses, // List of courses with only course_id and title
     taskStats,
     completionPercentage: Math.round(completionPercentage * 100) / 100, // Round to 2 decimal places
   };

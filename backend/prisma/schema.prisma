@@ -7,7 +7,6 @@ generator client {
   provider = "prisma-client-js"
 }
 
-
 enum Role {
   STUDENT
   MENTOR
@@ -28,6 +27,11 @@ enum WarningLevel {
   CRITICAL
 }
 
+enum WarningStatus {
+  ACTIVE
+  RESOLVED
+}
+
 enum NotificationType {
   TASK_ASSIGNED
   TASK_REVIEWED
@@ -36,87 +40,77 @@ enum NotificationType {
   SYSTEM_ANNOUNCEMENT
 }
 
-
-enum WarningStatus {
-  ACTIVE
-  RESOLVED
-}
-
 model User {
-  user_id    String   @id // Format: 26STD0001 or 26MEN001
-  password   String
-  role       Role
-  
+  user_id  String @id // Format: 26STD0001 or 26MEN001
+  password String
+  role     Role
 
   student       Student?
   mentor        Mentor?
   notifications Notification[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   deletedAt DateTime? // Soft delete
-  
+
   @@index([role])
   @@map("users")
 }
 
 model Student {
-  student_id   String  @id // Same as User.user_id
-  user         User    @relation(fields: [student_id], references: [user_id], onDelete: Cascade)
-  
+  student_id String @id // Same as User.user_id
+  user       User   @relation(fields: [student_id], references: [user_id], onDelete: Cascade)
+
   name         String
   photo        String?
-  social_links Json?   
-  
+  social_links Json?
 
-  progress     Float   @default(0.0)
-  warning_count Int    @default(0)
-  warning_status WarningStatus? // e.g., "ACTIVE", "RESOLVED"
-  
-  
+  progress       Float   @default(0.0)
+  warning_count  Int     @default(0)
+  warning_status String? // e.g., "ACTIVE", "CLEARED"
+
   mentorAssignments MentorStudent[] // Many-to-many with Mentor
-  assignments        TaskAssignment[]
-  warnings           Warning[]
-  
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  
+  assignments       TaskAssignment[]
+  warnings          Warning[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([student_id])
   @@map("students")
 }
 
 model Mentor {
-  mentor_id String  @id // Same as User.user_id
-  user      User    @relation(fields: [mentor_id], references: [user_id], onDelete: Cascade)
-  
-  name      String
-  photo     String?
-  contact   String? // Phone or email
-  bio       String? // Mentor biography
-  
+  mentor_id String @id // Same as User.user_id
+  user      User   @relation(fields: [mentor_id], references: [user_id], onDelete: Cascade)
+
+  name    String
+  photo   String?
+  contact String? // Phone or email
+  bio     String? // Mentor biography
 
   studentAssignments MentorStudent[] // Many-to-many with Student
   courses            Course[]
-  warningsSent       Warning[] @relation("MentorWarnings")
-  
+  warningsSent       Warning[]       @relation("MentorWarnings")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@index([mentor_id])
   @@map("mentors")
 }
 
 // Junction table for many-to-many relationship between Mentor and Student
 model MentorStudent {
-  id         String   @id 
+  id         String  @id
   mentor_id  String
   student_id String
-  mentor     Mentor   @relation(fields: [mentor_id], references: [mentor_id], onDelete: Cascade)
-  student    Student  @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
-  
+  mentor     Mentor  @relation(fields: [mentor_id], references: [mentor_id], onDelete: Cascade)
+  student    Student @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+
   assignedAt DateTime @default(now())
-  isActive    Boolean  @default(true)
-  
+  isActive   Boolean  @default(true)
+
   @@unique([mentor_id, student_id])
   @@index([mentor_id])
   @@index([student_id])
@@ -124,59 +118,57 @@ model MentorStudent {
 }
 
 model Course {
-  course_id String   @id @default(uuid())
-  title     String
-  url       String?
+  course_id   String  @id @default(uuid())
+  title       String
+  url         String?
   description String?
-  mentor_id String
-  
-  mentor    Mentor   @relation(fields: [mentor_id], references: [mentor_id], onDelete: Cascade)
-  tasks     Task[]
-  
+  mentor_id   String
+
+  mentor Mentor @relation(fields: [mentor_id], references: [mentor_id], onDelete: Cascade)
+  tasks  Task[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@index([mentor_id])
   @@map("courses")
 }
 
 model Task {
-  task_id     String   @id @default(uuid())
+  task_id     String  @id @default(uuid())
   title       String
-  description String   @db.Text
-  doc_link    String?  // Documentation link
+  description String  @db.Text
+  doc_link    String? // Documentation link
   course_id   String
-  
-  course      Course   @relation(fields: [course_id], references: [course_id], onDelete: Cascade)
+
+  course      Course           @relation(fields: [course_id], references: [course_id], onDelete: Cascade)
   assignments TaskAssignment[]
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([course_id])
   @@map("tasks")
 }
 
 model TaskAssignment {
-  id            String     @id @default(uuid())
-  task_id       String
-  student_id    String
-  
-  task          Task       @relation(fields: [task_id], references: [task_id], onDelete: Cascade)
-  student       Student    @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
-  
+  id         String @id @default(uuid())
+  task_id    String
+  student_id String
+
+  task    Task    @relation(fields: [task_id], references: [task_id], onDelete: Cascade)
+  student Student @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
 
   github_link   String?
   hosted_link   String?
   status        TaskStatus @default(PENDING)
   mentor_remark String?    @db.Text
-  
 
-  submittedAt   DateTime?
-  reviewedAt    DateTime?
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
-  
+  submittedAt DateTime?
+  reviewedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
   @@unique([task_id, student_id]) // A student can only have one assignment per task
   @@index([task_id])
   @@index([student_id])
@@ -185,23 +177,20 @@ model TaskAssignment {
 }
 
 model Warning {
-  id         String      @id @default(uuid())
+  id         String @id @default(uuid())
   student_id String
   mentor_id  String
-  
-  student    Student     @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
-  mentor     Mentor      @relation("MentorWarnings", fields: [mentor_id], references: [mentor_id], onDelete: Cascade)
-  
-  title      String
-  remark     String      @db.Text
-  level      WarningLevel
-  
-  status          WarningStatus @default(ACTIVE)
-  student_comment String?       @db.Text
-  resolvedAt      DateTime?
 
-  createdAt  DateTime    @default(now())
-  
+  student Student @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+  mentor  Mentor  @relation("MentorWarnings", fields: [mentor_id], references: [mentor_id], onDelete: Cascade)
+
+  title  String
+  remark String       @db.Text
+  level  WarningLevel 
+  status WarningStatus @default(ACTIVE)
+
+  createdAt DateTime @default(now())
+
   @@index([student_id])
   @@index([mentor_id])
   @@index([createdAt])
@@ -209,21 +198,20 @@ model Warning {
 }
 
 model Notification {
-  id        String          @id @default(uuid())
-  user_id   String
-  
-  user     User            @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
-  
-  message   String          @db.Text
-  type      NotificationType
-  isRead    Boolean         @default(false)
-  
+  id      String @id @default(uuid())
+  user_id String
 
-  relatedId String?         // e.g., task_id, course_id, etc.
-  
-  createdAt DateTime        @default(now())
+  user User @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+
+  message String           @db.Text
+  type    NotificationType
+  isRead  Boolean          @default(false)
+
+  relatedId String? // e.g., task_id, course_id, etc.
+
+  createdAt DateTime  @default(now())
   readAt    DateTime?
-  
+
   @@index([user_id])
   @@index([isRead])
   @@index([createdAt])
