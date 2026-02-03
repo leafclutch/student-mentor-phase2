@@ -6,19 +6,17 @@ interface IssueWarningPayload {
   student_id: string;
   title: string;
   remark: string;
-  title: string;
   level: WarningLevel;
-  status: WarningStatus
 }
 
 export const issueWarningService = async (
   mentorId: string,
   payload: IssueWarningPayload
 ) => {
-  const { student_id, title, remark, level, status } = payload;
+  const { student_id, title, remark, level } = payload;
 
-  if (!student_id || !title || !remark || !level || !status) {
-    throw new AppError("student_id, title, remark, level and status are required", 400);
+  if (!student_id || !title || !remark || !level) {
+    throw new AppError("student_id, title, remark and level are required", 400);
   }
 
   const isStudentAssignedToMentor = await prisma.mentorStudent.findFirst({
@@ -43,7 +41,6 @@ export const issueWarningService = async (
       title,
       remark,
       level,
-      status
     }
   });
 
@@ -60,20 +57,36 @@ export const issueWarningService = async (
 };
 
 export const getStudentWarningsService = async (
-  userId: string
+  studentId: string,
+  mentorId?: string
 ) => {
-  // Check if the student exists by the given id (userId)
+  // Check if the student exists
   const student = await prisma.student.findUnique({
-    where: { student_id: userId },
+    where: { student_id: studentId },
   });
 
   if (!student) {
     throw new AppError("Student not found", 404);
   }
 
-  // Fetch all warnings only for this particular student
+  // If a mentor is requesting, verify the student is assigned to them
+  if (mentorId) {
+    const isAssigned = await prisma.mentorStudent.findFirst({
+      where: {
+        mentor_id: mentorId,
+        student_id: studentId,
+        isActive: true,
+      },
+    });
+
+    if (!isAssigned) {
+      throw new AppError("You are not authorized to view warnings for this student", 403);
+    }
+  }
+
+  // Fetch all warnings for this student
   const warnings = await prisma.warning.findMany({
-    where: { student_id: userId },
+    where: { student_id: studentId },
     include: {
       mentor: {
         select: {
@@ -87,11 +100,11 @@ export const getStudentWarningsService = async (
 
   // Count warnings by status
   const activeCount = await prisma.warning.count({
-    where: { student_id: userId, status: "ACTIVE" },
+    where: { student_id: studentId, status: WarningStatus.ACTIVE },
   });
 
   const resolvedCount = await prisma.warning.count({
-    where: { student_id: userId, status: "RESOLVED" }, // or RESOLVED if you use that
+    where: { student_id: studentId, status: WarningStatus.RESOLVED },
   });
 
   return {
@@ -101,7 +114,6 @@ export const getStudentWarningsService = async (
       resolved: resolvedCount,
     },
   }
-
 };
 
 

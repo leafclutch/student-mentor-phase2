@@ -40,6 +40,12 @@ enum NotificationType {
   SYSTEM_ANNOUNCEMENT
 }
 
+
+enum WarningStatus {
+  ACTIVE
+  RESOLVED
+}
+
 model User {
   user_id  String @id // Format: 26STD0001 or 26MEN001
   password String
@@ -65,10 +71,11 @@ model Student {
   photo        String?
   social_links Json?
 
-  progress       Float   @default(0.0)
-  warning_count  Int     @default(0)
-  warning_status String? // e.g., "ACTIVE", "CLEARED"
-
+  progress     Float   @default(0.0)
+  warning_count Int    @default(0)
+  warning_status WarningStatus? // e.g., "ACTIVE", "RESOLVED"
+  
+  
   mentorAssignments MentorStudent[] // Many-to-many with Mentor
   assignments       TaskAssignment[]
   warnings          Warning[]
@@ -180,17 +187,20 @@ model Warning {
   id         String @id @default(uuid())
   student_id String
   mentor_id  String
+  
+  student    Student     @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
+  mentor     Mentor      @relation("MentorWarnings", fields: [mentor_id], references: [mentor_id], onDelete: Cascade)
+  
+  title      String
+  remark     String      @db.Text
+  level      WarningLevel
+  
+  status          WarningStatus @default(ACTIVE)
+  student_comment String?       @db.Text
+  resolvedAt      DateTime?
 
-  student Student @relation(fields: [student_id], references: [student_id], onDelete: Cascade)
-  mentor  Mentor  @relation("MentorWarnings", fields: [mentor_id], references: [mentor_id], onDelete: Cascade)
-
-  title  String
-  remark String       @db.Text
-  level  WarningLevel 
-  status WarningStatus @default(ACTIVE)
-
-  createdAt DateTime @default(now())
-
+  createdAt  DateTime    @default(now())
+  
   @@index([student_id])
   @@index([mentor_id])
   @@index([createdAt])
