@@ -6,9 +6,7 @@ interface IssueWarningPayload {
   student_id: string;
   title: string;
   remark: string;
-  title: string;
   level: WarningLevel;
-  status: WarningStatus
 }
 
 export const issueWarningService = async (
@@ -43,7 +41,6 @@ export const issueWarningService = async (
       title,
       remark,
       level,
-      status
     }
   });
 
@@ -87,11 +84,11 @@ export const getStudentWarningsService = async (
 
   // Count warnings by status
   const activeCount = await prisma.warning.count({
-    where: { student_id: userId, status: "ACTIVE" },
+    where: { student_id: userId, status: WarningStatus.ACTIVE },
   });
 
   const resolvedCount = await prisma.warning.count({
-    where: { student_id: userId, status: "RESOLVED" }, // or RESOLVED if you use that
+    where: { student_id: userId, status: WarningStatus.RESOLVED },
   });
 
   return {
