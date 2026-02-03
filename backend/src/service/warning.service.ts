@@ -57,20 +57,36 @@ export const issueWarningService = async (
 };
 
 export const getStudentWarningsService = async (
-  userId: string
+  studentId: string,
+  mentorId?: string
 ) => {
-  // Check if the student exists by the given id (userId)
+  // Check if the student exists
   const student = await prisma.student.findUnique({
-    where: { student_id: userId },
+    where: { student_id: studentId },
   });
 
   if (!student) {
     throw new AppError("Student not found", 404);
   }
 
-  // Fetch all warnings only for this particular student
+  // If a mentor is requesting, verify the student is assigned to them
+  if (mentorId) {
+    const isAssigned = await prisma.mentorStudent.findFirst({
+      where: {
+        mentor_id: mentorId,
+        student_id: studentId,
+        isActive: true,
+      },
+    });
+
+    if (!isAssigned) {
+      throw new AppError("You are not authorized to view warnings for this student", 403);
+    }
+  }
+
+  // Fetch all warnings for this student
   const warnings = await prisma.warning.findMany({
-    where: { student_id: userId },
+    where: { student_id: studentId },
     include: {
       mentor: {
         select: {
@@ -84,11 +100,11 @@ export const getStudentWarningsService = async (
 
   // Count warnings by status
   const activeCount = await prisma.warning.count({
-    where: { student_id: userId, status: WarningStatus.ACTIVE },
+    where: { student_id: studentId, status: WarningStatus.ACTIVE },
   });
 
   const resolvedCount = await prisma.warning.count({
-    where: { student_id: userId, status: WarningStatus.RESOLVED },
+    where: { student_id: studentId, status: WarningStatus.RESOLVED },
   });
 
   return {
@@ -98,7 +114,6 @@ export const getStudentWarningsService = async (
       resolved: resolvedCount,
     },
   }
-
 };
 
 
