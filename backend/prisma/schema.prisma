@@ -41,10 +41,7 @@ enum NotificationType {
 }
 
 
-enum WarningStatus {
-  ACTIVE
-  RESOLVED
-}
+
 
 model User {
   user_id  String @id // Format: 26STD0001 or 26MEN001
