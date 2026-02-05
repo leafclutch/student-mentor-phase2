@@ -1,6 +1,6 @@
 import prisma from "../connect/index";
 import { AppError } from "../utils/apperror";
-import { TaskStatus, WarningLevel } from "@prisma/client";
+import { TaskStatus, WarningLevel, WarningStatus } from "@prisma/client";
 
 export const getStudentDashboardService = async (studentId: string) => {
   
@@ -312,14 +312,14 @@ export const resolveWarningService = async (
     throw new AppError("You are not authorized to resolve this warning", 403);
   }
 
-  if (warning.status === "RESOLVED") {
+  if (warning.status === WarningStatus.RESOLVED) {
     throw new AppError("Warning is already resolved", 400);
   }
 
   const updatedWarning = await prisma.warning.update({
     where: { id: warningId },
     data: {
-      status: "RESOLVED",
+      status: WarningStatus.RESOLVED,
       student_comment: comment,
       resolvedAt: new Date(),
     },
@@ -329,7 +329,7 @@ export const resolveWarningService = async (
   const activeWarningsCount = await prisma.warning.count({
     where: {
       student_id: studentId,
-      status: "ACTIVE",
+      status: WarningStatus.ACTIVE,
     },
   });
 

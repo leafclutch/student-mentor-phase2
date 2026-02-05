@@ -48,15 +48,27 @@ export const getStudentWarnings = async (
       throw new AppError("User not authenticated", 401);
     }
 
-    // Check if the user is a STUDENT - only students can check warnings
-    if (req.user.role !== "STUDENT") {
-      throw new AppError("Access denied. Students only.", 403);
+    let targetStudentId = userId;
+    let mentorId = undefined;
+
+    if (req.user.role === 'MENTOR') {
+      // Mentor must provide student ID
+      const { studentId } = req.params;
+      if (!studentId) {
+        throw new AppError("Student ID is required for mentors", 400);
+      }
+      targetStudentId = studentId;
+      mentorId = userId; // Pass mentor ID for permission check
+    } else if (req.user.role === 'STUDENT') {
+      // Students can only see their own warnings
+      targetStudentId = userId;
+    } else {
+        throw new AppError("Access denied. Invalid role.", 403);
     }
 
-    const studentId = userId;
-
     const warnings = await warningService.getStudentWarningsService(
-      userId,
+      targetStudentId,
+      mentorId
     );
 
     res.status(200).json(warnings);
