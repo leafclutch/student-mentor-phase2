@@ -1,31 +1,34 @@
 import { useState, useEffect } from "react";
-import { Github, ExternalLink, MessageSquare, Check, RotateCcw, Search, Loader2 } from "lucide-react";
+import { Github, ExternalLink, MessageSquare, Check, RotateCcw, Loader2 } from "lucide-react";
 import { reviewTask } from "../../../api/taskApi";
 import { useMentor } from "../../../context/MentorContext";
 import { type TaskAssignment, TaskStatus } from "../types";
 import toast from "react-hot-toast";
 
 const TaskReview = () => {
-  const { assignments, fetchAssignments, reviewAssignmentAction, loading: ctxLoading } = useMentor();
+  const { assignments, fetchAssignments } = useMentor();
   const [submissions, setSubmissions] = useState<TaskAssignment[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [feedback, setFeedback] = useState("");
+  const [loading, setLoading] = useState<boolean>(false);
+  const [feedback, setFeedback] = useState<string>("");
   const [selectedTask, setSelectedTask] = useState<TaskAssignment | null>(null);
 
   useEffect(() => {
-    const loadAssignments = async () => {
+    const loadAssignments = async (): Promise<void> => {
       setLoading(true);
       try {
         await fetchAssignments();
       } catch (err) {
         console.error("Failed to fetch assignments", err);
-        toast.error("Failed to fetch assignments");
+        // Only show toast on actual error, not on initial load
+        if (err instanceof Error && err.message !== "Failed to fetch assignments") {
+          toast.error("Failed to load task assignments");
+        }
       } finally {
         setLoading(false);
       }
     };
     loadAssignments();
-  }, []);
+  }, [fetchAssignments]);
 
   useEffect(() => {
     if (assignments) {
@@ -36,28 +39,39 @@ const TaskReview = () => {
     }
   }, [assignments]);
 
-  const handleReview = async (status: TaskStatus) => {
-    if (!selectedTask || !feedback) return alert("Please select a task and add feedback. ok.");
-    
+  const handleReview = async (status: TaskStatus): Promise<void> => {
+    if (!selectedTask || !feedback.trim()) {
+      toast.error("Please select a task and add feedback");
+      return;
+    }
+
     setLoading(true);
     try {
-      await reviewAssignmentAction(selectedTask.id, status, feedback);
+      await reviewTask(
+        selectedTask.task_id,
+        selectedTask.student_id,
+        status,
+        feedback
+      );
+      toast.success(`Task marked as ${status}`);
       setSubmissions(submissions.filter(s => s.id !== selectedTask.id));
       setSelectedTask(null);
       setFeedback("");
+      await fetchAssignments();
     } catch (err) {
       console.error("Review failed", err);
-      toast.error("Failed to review assignment.");
+      const errorMessage = err instanceof Error ? err.message : "Failed to review assignment";
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
   };
-  
+
   if (loading) {
     return (
-        <div className="flex justify-center items-center h-screen">
-            <Loader2 className="animate-spin text-blue-600" size={48} />
-        </div>
+      <div className="flex justify-center items-center h-screen">
+        <Loader2 className="animate-spin text-blue-600" size={48} />
+      </div>
     );
   }
 
@@ -68,10 +82,10 @@ const TaskReview = () => {
           <h2 className="text-xl font-bold text-gray-900">Pending Reviews</h2>
           <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold">{submissions.length} Total</span>
         </div>
-        
+
         {submissions.map((item) => (
-          <div 
-            key={item.id} 
+          <div
+            key={item.id}
             onClick={() => setSelectedTask(item)}
             className={`p-4 bg-white border rounded-xl cursor-pointer transition-all ${selectedTask?.id === item.id ? 'border-blue-500 ring-2 ring-blue-50' : 'hover:border-gray-300 shadow-sm'}`}
           >
@@ -97,9 +111,9 @@ const TaskReview = () => {
               <p className="text-sm text-gray-500">Task: {selectedTask.task.title}</p>
             </div>
 
-            <a 
-              href={selectedTask.github_link!} 
-              target="_blank" 
+            <a
+              href={selectedTask.github_link!}
+              target="_blank"
               className="flex items-center justify-center gap-2 w-full py-3 bg-gray-900 text-white rounded-xl font-bold text-sm hover:bg-black transition-all"
             >
               <Github size={18} /> View Code on GitHub <ExternalLink size={14} />
@@ -107,24 +121,24 @@ const TaskReview = () => {
 
             <div className="space-y-2">
               <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Internal Feedback</label>
-              <textarea 
-                rows="4"
+              <textarea
+                rows={4}
                 value={feedback}
-                onChange={(e) => setFeedback(e.target.value)}
-                placeholder="What should the student fix? ok."
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFeedback(e.target.value)}
+                placeholder="What should the student fix?"
                 className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all"
               ></textarea>
             </div>
 
             <div className="grid grid-cols-2 gap-3 pt-2">
-              <button 
+              <button
                 onClick={() => handleReview(TaskStatus.REJECTED)}
                 disabled={loading}
                 className="flex items-center justify-center gap-2 py-3 border border-orange-200 text-orange-600 rounded-xl font-bold text-xs hover:bg-orange-50 transition-all"
               >
                 <RotateCcw size={16} /> Request Changes
               </button>
-              <button 
+              <button
                 onClick={() => handleReview(TaskStatus.APPROVED)}
                 disabled={loading}
                 className="flex items-center justify-center gap-2 py-3 bg-green-600 text-white rounded-xl font-bold text-xs hover:bg-green-700 transition-all shadow-lg shadow-green-100"
@@ -138,11 +152,11 @@ const TaskReview = () => {
             <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-300">
               <MessageSquare size={32} />
             </div>
-            <p className="text-gray-400 font-medium">Select a submission to start review. ok.</p>
+            <p className="text-gray-400 font-medium">Select a submission to start review</p>
           </div>
         )}
       </div>
-    </div>
+    </div >
   );
 };
 

@@ -38,7 +38,7 @@ enum NotificationType {
   WARNING_ISSUED
   COURSE_CREATED
   SYSTEM_ANNOUNCEMENT
-}
+  }
 
 
 

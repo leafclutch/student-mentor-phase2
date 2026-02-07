@@ -64,7 +64,7 @@ export const getMentorNotifications = async (): Promise<Notification[]> => {
   return res.data.notifications || res.data;
 };
 
-export const createStudent = async (studentData: Omit<Student, 'student_id' | 'progress' | 'warning_count' | 'createdAt' | 'updatedAt'>): Promise<Student> => {
+export const createStudent = async (studentData: Omit<Student, 'student_id' | 'progress' | 'warning_count' | 'createdAt' | 'updatedAt'> & { password?: string }): Promise<Student> => {
     const res = await api.post("/mentors/students", studentData);
     return res.data;
 }

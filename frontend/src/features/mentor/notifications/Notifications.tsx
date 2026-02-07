@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Loader2, Bell } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useMentor } from '../../../context/MentorContext';
 import { getNotifications, sendNotification } from '../../../api/notificationApi';
-import { type Notification, NotificationType,type Student } from '../types/notification';
+import { type Notification, NotificationType } from '../types';
 import NotificationForm from './components/NotificationForm';
 import toast from 'react-hot-toast';
 

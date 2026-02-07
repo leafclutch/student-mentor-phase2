@@ -4,6 +4,7 @@ import ProtectedRoute from "../features/auth/components/ProtectedRoute";
 import StudentDashboard from "../features/student/pages/StudentDashboard";
 import { StudentProvider } from "../context/StudentContext";
 import MentorDashboard from "../features/mentor/MentorDashboard";
+import Dashboard from "../features/mentor/pages/Dashboard";
 import { MentorProvider } from "../context/MentorContext";
 import MyStudents from "../features/mentor/mystudents/MyStudents";
 import AddStudent from "../features/mentor/student/AddStudent";
@@ -42,7 +43,8 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       >
-        <Route index element={<Navigate to="students" replace />} />
+        <Route index element={<Navigate to="dashboard" replace />} />
+        <Route path="dashboard" element={<Dashboard />} />
         <Route path="students" element={<MyStudents />} />
         <Route path="students/add" element={<AddStudent />} />
         <Route path="students/:studentId" element={<StudentDetails />} />

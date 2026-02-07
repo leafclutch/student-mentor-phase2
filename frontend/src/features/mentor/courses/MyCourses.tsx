@@ -1,5 +1,5 @@
-import { useState, useEffect, ChangeEvent } from 'react';
-import { Search, Users, FileText, UserPlus, Edit, Plus, Loader2 } from 'lucide-react';
+import { useState, useEffect, type ChangeEvent } from 'react';
+import { Search, UserPlus, Edit, Plus, Loader2 } from 'lucide-react';
 import { useMentor } from '../../../context/MentorContext';
 import type { Course } from '../types';
 
@@ -10,15 +10,15 @@ const MyCourses = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (dashboard?.mentor?.courses) {
+    if (dashboard?.courses) {
       setLoading(false);
     }
   }, [dashboard]);
 
 
-  const courses: Course[] = dashboard?.mentor?.courses || [];
+  const courses: Course[] = dashboard?.courses || [];
 
-  const tabs = [
+  const tabs: { id: 'all' | 'active' | 'archived'; label: string; count: number }[] = [
     { id: 'all', label: 'All Courses', count: courses.length },
     { id: 'active', label: 'Active', count: courses.filter(c => !c.url).length },
     { id: 'archived', label: 'Archived', count: courses.filter(c => !!c.url).length },
@@ -33,7 +33,7 @@ const MyCourses = () => {
   const handleSearch = (e: ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
   };
-  
+
   if (loading) {
     return <div className='flex items-center justify-center h-screen'><Loader2 className='animate-spin' /></div>
   }
@@ -77,11 +77,10 @@ const MyCourses = () => {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-md transition-colors text-sm ${
-                      activeTab === tab.id
-                        ? 'bg-white text-blue-600 shadow-sm'
-                        : 'text-gray-600 hover:text-gray-900'
-                    }`}
+                    className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-md transition-colors text-sm ${activeTab === tab.id
+                      ? 'bg-white text-blue-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
+                      }`}
                   >
                     <span className="hidden sm:inline">{tab.label} </span>
                     <span className="sm:hidden">{tab.label.split(' ')[0]} </span>

@@ -33,7 +33,7 @@ type StudentContextType = {
   tasks: StudentAssignment[] | null;
   dashboard: StudentDashboard | null;
   progressReport: TaskStatsResponse | null;
-  warning: WarningsResponse | null; 
+  warning: WarningsResponse | null;
   notifications: Notification[] | null;
   unreadCount: number;
   loading: boolean;
@@ -71,6 +71,7 @@ export const StudentProvider = ({ children }: { children: ReactNode }) => {
   const { authUser } = useAuth();
 
   const studentDashboard = async () => {
+    if (!authUser || authUser.role !== "STUDENT") return;
     setLoading(true);
     try {
       const response = await getStudentDashboard();
@@ -83,11 +84,12 @@ export const StudentProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const fetchTasks = async () => {
+    if (!authUser || authUser.role !== "STUDENT") return;
     setLoading(true);
     try {
       const response = await getAssignTasks();
-      const actualTasks = response.tasks || response;
-      setTasks(Array.isArray(actualTasks) ? actualTasks : []);
+      const actualTasks = Array.isArray(response) ? response : response.tasks;
+      setTasks(actualTasks || []);
     } catch {
       toast.error("Failed to fetch tasks");
     } finally {
@@ -96,6 +98,7 @@ export const StudentProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const fetchProgressReport = async () => {
+    if (!authUser || authUser.role !== "STUDENT") return;
     try {
       const response = await getProgressReport();
       setProgressReport(response);
@@ -105,23 +108,29 @@ export const StudentProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const fetchStudentWarnings = async () => {
+    if (!authUser || authUser.role !== "STUDENT") return;
     try {
       const response = await getStudentWarnings();
-      setWarning(response); 
+      // Calculate counts since the API only returns warnings list
+      const warnings = response.warnings || [];
+      const counts = {
+        active: warnings.filter(w => w.status === "ACTIVE").length,
+        resolved: warnings.filter(w => w.status === "RESOLVED").length
+      };
+      setWarning({ warnings, counts });
     } catch (err: unknown) {
       console.error(err);
     }
   };
 
   const fetchNotifications = async () => {
+    if (!authUser || authUser.role !== "STUDENT") return;
     try {
       const response = await getStudentNotifications();
-      const actualNotifications = response.notifications || response;
-      setNotifications(
-        Array.isArray(actualNotifications) ? actualNotifications : []
-      );
+      const actualNotifications = Array.isArray(response) ? response : response.notifications;
+      setNotifications(actualNotifications || []);
     } catch (err: unknown) {
-      console.error("Fetch notifications failed. ok.", err);
+      console.error("Fetch notifications failed", err);
     }
   };
 
@@ -137,7 +146,7 @@ export const StudentProvider = ({ children }: { children: ReactNode }) => {
       await markAsRead(notificationId);
       await fetchNotifications();
     } catch (err) {
-      console.error("Failed to mark as read. ok.", err);
+      console.error("Failed to mark as read", err);
       await fetchNotifications();
     }
   };
@@ -165,9 +174,9 @@ export const StudentProvider = ({ children }: { children: ReactNode }) => {
     try {
       await submitTask(taskId, studentId, link);
       await fetchTasks();
-      toast.success("Submitted! ok.");
+      toast.success("Submitted successfully");
     } catch {
-      toast.error("Failed.");
+      toast.error("Failed to submit task");
     }
   };
 
@@ -178,17 +187,18 @@ export const StudentProvider = ({ children }: { children: ReactNode }) => {
     try {
       await resolveWarning(warningId, comment);
       await fetchStudentWarnings();
-      toast.success("Warning resolved successfully!");
+      toast.success("Warning resolved successfully");
     } catch (err: unknown) {
       console.error("Failed to resolve warning:", err);
-      const errorMessage = err instanceof Error ? err.message : "Failed to resolve warning";
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to resolve warning";
       toast.error(errorMessage);
       throw err;
     }
   };
 
   useEffect(() => {
-    if (authUser) {
+    if (authUser && authUser.role === "STUDENT") {
       studentDashboard();
       fetchTasks();
       fetchProgressReport();
@@ -196,7 +206,7 @@ export const StudentProvider = ({ children }: { children: ReactNode }) => {
       fetchNotifications();
     }
   }, [authUser]);
-  
+
   const unreadCount =
     notifications?.filter((n) => !(n.isRead === true || !!n.readAt)).length ||
     0;

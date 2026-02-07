@@ -63,7 +63,7 @@ const StudentWarnings: React.FC = () => {
   };
 
   return (
-    <div className="bg-gray-50 p-4 md:p-8 min-h-screen">
+    <div className="p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-8">
         <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
           <div>
@@ -71,7 +71,7 @@ const StudentWarnings: React.FC = () => {
               Student Warnings
             </h1>
             <p className="text-gray-600 mt-1">
-              Review active and past warnings issued by your mentor. ok.
+              Review active and past warnings issued by your mentor.
             </p>
           </div>
 
@@ -137,7 +137,7 @@ const StudentWarnings: React.FC = () => {
             ))
           ) : (
             <div className="bg-white border border-dashed rounded-xl p-10 text-center text-gray-500">
-              No active warnings. ok.
+              No active warnings.
             </div>
           )}
         </section>
@@ -187,8 +187,8 @@ const StudentWarnings: React.FC = () => {
 
       {/* Resolve Modal */}
       {modalState.isOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full">
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[60] p-4 transition-all animate-in fade-in duration-300">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full transform transition-all animate-in zoom-in-95 duration-300">
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
               <h3 className="text-lg font-bold text-gray-900">
                 Resolve Warning

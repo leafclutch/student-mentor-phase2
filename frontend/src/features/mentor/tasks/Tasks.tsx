@@ -7,9 +7,11 @@ import {
   X,
   BookOpen,
 } from "lucide-react";
-import { createTask, getAllTasks } from "../../../api/taskApi";
+import { getAllTasks } from "../../../api/taskApi";
 import type { Task } from "../types";
 import { Link } from "react-router-dom";
+import toast from "react-hot-toast";
+import { useMentor } from "../../../context/MentorContext";
 
 const Tasks = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -41,21 +43,23 @@ const Tasks = () => {
     fetchLibrary();
   }, []);
 
+  const { createNewTask } = useMentor();
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.title || !form.description || !form.course_id) {
-      alert("Fill all fields. ok.");
+      toast.error("Fill all fields");
       return;
     }
 
     setIsSubmitting(true);
     try {
-      await createTask(form);
+      await createNewTask(form);
       setShowModal(false);
       setForm({ title: "", description: "", course_id: "", doc_link: "" });
       await fetchLibrary();
     } catch (err) {
-      console.error("Task creation failed. ok.");
+      console.error("Task creation failed", err);
     } finally {
       setIsSubmitting(false);
     }
@@ -73,16 +77,31 @@ const Tasks = () => {
             Task Library
           </h1>
           <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mt-1">
-            Define master assignments. ok.
+            Define master assignments
           </p>
         </div>
 
-        <button
-          onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 bg-black text-white px-6 py-2.5 rounded-xl text-[10px] font-black uppercase hover:bg-gray-800 transition-all shadow-lg shadow-gray-200"
-        >
-          <Plus size={16} /> Create Task
-        </button>
+        <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
+          <div className="relative w-full md:w-64">
+            <Search
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              size={16}
+            />
+            <input
+              type="text"
+              placeholder="Search tasks..."
+              className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-100 rounded-xl text-[10px] font-black uppercase outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <button
+            onClick={() => setShowModal(true)}
+            className="w-full md:w-auto flex items-center justify-center gap-2 bg-black text-white px-6 py-2.5 rounded-xl text-[10px] font-black uppercase hover:bg-gray-800 transition-all shadow-lg shadow-gray-200"
+          >
+            <Plus size={16} /> Create Task
+          </button>
+        </div>
       </div>
 
       {loading ? (
@@ -113,7 +132,7 @@ const Tasks = () => {
       ) : (
         <div className="text-center py-20 bg-white rounded-[40px] border-2 border-dashed border-gray-100">
           <BookOpen size={40} className="mx-auto text-gray-100 mb-4" />
-          <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Library is empty. ok.</p>
+          <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Library is empty</p>
         </div>
       )}
 
@@ -161,16 +180,16 @@ const Tasks = () => {
                   placeholder="Detailed requirements..."
                 />
               </div>
-               <div>
-                  <label className="text-[10px] font-black text-gray-400 uppercase block mb-2">Doc Link</label>
-                  <input
-                    type="text"
-                    value={form.doc_link}
-                    onChange={(e) => setForm({ ...form, doc_link: e.target.value })}
-                    className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="e.g., https://example.com/docs"
-                  />
-                </div>
+              <div>
+                <label className="text-[10px] font-black text-gray-400 uppercase block mb-2">Doc Link</label>
+                <input
+                  type="text"
+                  value={form.doc_link}
+                  onChange={(e) => setForm({ ...form, doc_link: e.target.value })}
+                  className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g., https://example.com/docs"
+                />
+              </div>
               <button
                 type="submit"
                 disabled={isSubmitting}

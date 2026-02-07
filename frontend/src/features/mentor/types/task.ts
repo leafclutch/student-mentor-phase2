@@ -1,5 +1,6 @@
 
-import { type Course,type Student } from "./index";
+import type { Course } from "./course";
+import type { Student } from "./student";
 
 export enum TaskStatus {
   PENDING = "PENDING",

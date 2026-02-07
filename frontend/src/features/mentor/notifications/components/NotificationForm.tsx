@@ -1,5 +1,5 @@
 import { Link2, Paperclip, Loader2, Bell } from 'lucide-react';
-import { type Student } from '../../types/notification';
+import { type Student } from '../../types';
 
 type NotificationFormProps = {
   students: Student[];

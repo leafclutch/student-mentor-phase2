@@ -3,6 +3,7 @@ import {
   useContext,
   useEffect,
   useState,
+  useCallback,
   type ReactNode,
 } from "react";
 import toast from "react-hot-toast";
@@ -18,8 +19,8 @@ import {
   getMentorAssignments,
   reviewAssignment,
 } from "../api/mentorApi";
-import { createTask, getAllTasks, getTask, reviewTask } from "../api/taskApi";
-import { issueWarning as apiIssueWarning, getStudentWarnings } from "../api/warningApi";
+import { createTask, reviewTask } from "../api/taskApi";
+import { issueWarning as apiIssueWarning } from "../api/warningApi";
 import {
   getNotifications,
   sendNotification,
@@ -33,7 +34,6 @@ import {
   type TaskAssignment,
   TaskStatus,
   type Notification,
-  type Warning,
   WarningLevel,
 } from "../features/mentor/types";
 
@@ -71,7 +71,7 @@ type MentorContextType = {
     studentData: Omit<
       Student,
       "student_id" | "progress" | "warning_count" | "createdAt" | "updatedAt"
-    >
+    > & { password?: string }
   ) => Promise<void>;
   updateStudentDetails: (
     studentId: string,
@@ -103,199 +103,264 @@ export const MentorProvider = ({ children }: { children: ReactNode }) => {
   const { authUser } = useAuth();
 
   /* --- DATA FETCHING --- */
-  const fetchMentorDashboard = async () => {
+  const fetchMentorDashboard = useCallback(async () => {
+    if (!authUser || authUser.role !== "MENTOR") return;
     setLoading(true);
     try {
       const [dash, stds, notes] = await Promise.all([
         getMentorDashboard(),
         getMentorStudents(),
-        getNotifications()
+        getNotifications(),
       ]);
       setDashboard(dash);
       setStudents(stds);
       setNotifications(notes);
     } catch (err) {
       console.error(err);
-      toast.error("Failed to load dashboard data. ok.");
+      toast.error("Failed to load dashboard data");
     } finally {
       setLoading(false);
     }
-  };
+  }, [authUser]);
 
-  const fetchStudents = async () => {
+  const fetchStudents = useCallback(async () => {
+    if (!authUser || authUser.role !== "MENTOR") return;
     try {
       const response = await getMentorStudents();
       setStudents(response);
     } catch (err) {
       console.error(err);
     }
-  };
+  }, [authUser]);
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
+    if (!authUser || authUser.role !== "MENTOR") return;
     try {
       const response = await getNotifications();
       setNotifications(response);
     } catch (err) {
       console.error(err);
     }
-  };
+  }, [authUser]);
 
-  const fetchAssignments = async () => {
+  const fetchAssignments = useCallback(async () => {
+    if (!authUser || authUser.role !== "MENTOR") return;
     setLoading(true);
     try {
       const response = await getMentorAssignments();
       setAssignments(response);
     } catch (err) {
       console.error(err);
-      toast.error("Failed to fetch assignments.");
+      toast.error("Failed to fetch assignments");
     } finally {
       setLoading(false);
     }
-  };
+  }, [authUser]);
 
-  const fetchStudentDetails = async (id: string) => {
+  const fetchStudentDetails = useCallback(async (id: string) => {
+    if (!authUser || authUser.role !== "MENTOR") return;
     setLoading(true);
     try {
       const response = await getStudentProfile(id);
       setSelectedStudent(response);
     } catch (err) {
       console.error(err);
-      toast.error("Failed to load student details.");
+      toast.error("Failed to load student details");
     } finally {
       setLoading(false);
     }
-  };
+  }, [authUser]);
 
   /* --- ACTIONS --- */
-  const assignNewTask = async (studentId: string, taskId: string) => {
-    try {
-      await assignTaskToStudent(studentId, taskId);
-      toast.success("Task assigned successfully. ok.");
-      await fetchStudents(); // Refresh student list to see changes
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to assign task.");
-      throw err;
-    }
-  };
+  const assignNewTask = useCallback(
+    async (studentId: string, taskId: string) => {
+      try {
+        await assignTaskToStudent(studentId, taskId);
+        toast.success("Task assigned successfully");
+        await fetchStudents(); // Refresh student list to see changes
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to assign task");
+        throw err;
+      }
+    },
+    [fetchStudents]
+  );
 
-  const deleteStudentAction = async (studentId: string) => {
-    try {
-      await deleteStudent(studentId);
-      toast.success("Student deleted successfully.");
-      await fetchStudents(); // Refresh student list
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to delete student.");
-      throw err;
-    }
-  };
+  const deleteStudentAction = useCallback(
+    async (studentId: string) => {
+      try {
+        await deleteStudent(studentId);
+        toast.success("Student deleted successfully");
+        await fetchStudents(); // Refresh student list
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to delete student");
+        throw err;
+      }
+    },
+    [fetchStudents]
+  );
 
-  const issueWarning = async (studentId: string, remark: string, title: string, level: WarningLevel) => {
-    try {
-      await apiIssueWarning(studentId, remark, title, level);
-      toast.success("Warning issued. ok.");
-      await fetchStudents(); // Refresh to update warning_count
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to issue warning.");
-      throw err;
-    }
-  };
+  const issueWarning = useCallback(
+    async (
+      studentId: string,
+      remark: string,
+      title: string,
+      level: WarningLevel
+    ) => {
+      try {
+        await apiIssueWarning(studentId, remark, title, level);
+        toast.success("Warning issued");
+        await fetchStudents(); // Refresh to update warning_count
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to issue warning");
+        throw err;
+      }
+    },
+    [fetchStudents]
+  );
 
-  const reviewTaskAction = async (taskId: string, status: TaskStatus, feedback: string) => {
-    try {
-      await reviewTask(taskId, status, feedback);
-      toast.success(`Task marked as ${status}. ok.`);
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to review task.");
-      throw err;
-    }
-  };
+  const reviewTaskAction = useCallback(
+    async (
+      taskId: string,
+      status: TaskStatus,
+      feedback: string
+    ): Promise<void> => {
+      try {
+        await reviewTask(taskId, "", status, feedback);
+        toast.success(`Task marked as ${status}`);
+      } catch (err) {
+        console.error(err);
+        const errorMessage =
+          err instanceof Error ? err.message : "Failed to review task";
+        toast.error(errorMessage);
+        throw err;
+      }
+    },
+    []
+  );
 
-  const reviewAssignmentAction = async (
-    assignmentId: string,
-    status: TaskAssignment["status"],
-    mentorRemark: string
-  ) => {
-    try {
-      await reviewAssignment(assignmentId, status, mentorRemark);
-      toast.success(`Assignment marked as ${status}.`);
-      await fetchAssignments(); // Refresh assignments list
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to review assignment.");
-      throw err;
-    }
-  };
+  const reviewAssignmentAction = useCallback(
+    async (
+      assignmentId: string,
+      status: TaskAssignment["status"],
+      mentorRemark: string
+    ): Promise<void> => {
+      try {
+        await reviewAssignment(assignmentId, status, mentorRemark);
+        toast.success(`Assignment marked as ${status}`);
+        await fetchAssignments();
+      } catch (err) {
+        console.error(err);
+        const errorMessage =
+          err instanceof Error ? err.message : "Failed to review assignment";
+        toast.error(errorMessage);
+        throw err;
+      }
+    },
+    [fetchAssignments]
+  );
 
-  const createNewStudent = async (studentData: any) => {
-    try {
-      await createStudent(studentData);
-      toast.success("Student created. ok.");
-      await fetchStudents();
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to create student.");
-    }
-  };
+  const createNewStudent = useCallback(
+    async (
+      studentData: Omit<
+        Student,
+        "student_id" | "progress" | "warning_count" | "createdAt" | "updatedAt"
+      > & { password?: string }
+    ) => {
+      try {
+        await createStudent(studentData);
+        toast.success("Student created");
+        await fetchStudents();
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to create student");
+      }
+    },
+    [fetchStudents]
+  );
 
-  const updateStudentDetails = async (studentId: string, studentData: Partial<Student>) => {
-    try {
-      await updateStudent(studentId, studentData);
-      toast.success("Student profile updated. ok.");
-      await fetchStudentDetails(studentId);
-    } catch (err) {
-      console.error(err);
-      toast.error("Update failed.");
-    }
-  };
+  const updateStudentDetails = useCallback(
+    async (studentId: string, studentData: Partial<Student>) => {
+      try {
+        await updateStudent(studentId, studentData);
+        toast.success("Student profile updated");
+        await fetchStudentDetails(studentId);
+      } catch (err) {
+        console.error(err);
+        toast.error("Update failed");
+      }
+    },
+    [fetchStudentDetails]
+  );
 
-  const createNewTask = async (taskData: any) => {
-    try {
-      await createTask(taskData);
-      toast.success("New task created in library. ok.");
-    } catch (err) {
-      console.error(err);
-      toast.error("Task creation failed.");
-    }
-  };
+  const createNewTask = useCallback(
+    async (
+      taskData: Omit<Task, "task_id" | "course" | "createdAt" | "updatedAt">
+    ) => {
+      try {
+        await createTask(taskData);
+        toast.success("New task created in library");
+      } catch (err) {
+        console.error(err);
+        toast.error("Task creation failed");
+      }
+    },
+    []
+  );
 
-  const sendNewNotification = async (notificationData: any) => {
-    try {
-      await sendNotification(notificationData);
-      toast.success("Notification sent. ok.");
-    } catch (err) {
-      console.error(err);
-    }
-  };
+  const sendNewNotification = useCallback(
+    async (
+      notificationData: Omit<
+        Notification,
+        "id" | "isRead" | "createdAt" | "readAt"
+      >
+    ) => {
+      try {
+        await sendNotification(notificationData);
+        toast.success("Notification sent");
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to send notification");
+      }
+    },
+    []
+  );
 
-  const markAsRead = async (notificationId: string) => {
+  const markAsRead = useCallback(async (notificationId: string) => {
     try {
       await markNotificationAsRead(notificationId);
-      setNotifications(prev => 
-        prev ? prev.map(n => n.id === notificationId ? {...n, isRead: true} : n) : null
+      setNotifications((prev) =>
+        prev
+          ? prev.map((n) =>
+            n.id === notificationId ? { ...n, isRead: true } : n
+          )
+          : null
       );
     } catch (err) {
       console.error(err);
     }
-  };
+  }, []);
 
-  const markAllAsReadAction = async () => {
+  const markAllAsReadAction = useCallback(async () => {
     try {
       await apiMarkAllAsRead();
-      setNotifications(prev => prev ? prev.map(n => ({...n, isRead: true})) : null);
+      setNotifications((prev) =>
+        prev ? prev.map((n) => ({ ...n, isRead: true })) : null
+      );
     } catch (err) {
       console.error(err);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    if (authUser) {
+    if (authUser && authUser.role === "MENTOR") {
       fetchMentorDashboard();
+      fetchAssignments();
     }
-  }, [authUser]);
+  }, [authUser, fetchMentorDashboard, fetchAssignments]);
 
   return (
     <MentorContext.Provider

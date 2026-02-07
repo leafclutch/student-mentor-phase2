@@ -1,5 +1,7 @@
 
-import { type Mentor,type TaskAssignment,type Warning } from "./index";
+import type { Mentor } from "./mentor";
+import type { TaskAssignment } from "./task";
+import type { Warning } from "./warning";
 
 export interface Student {
   student_id: string;

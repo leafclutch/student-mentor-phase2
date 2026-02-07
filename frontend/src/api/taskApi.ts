@@ -17,9 +17,15 @@ export const getTask = async (taskId: string): Promise<Task> => {
 };
 
 export const reviewTask = async (
-  assignmentId: string,
-  reviewData: { status: TaskStatus; mentor_remark: string }
+  taskId: string,
+  studentId: string,
+  status: TaskStatus,
+  remark: string
 ): Promise<TaskAssignment> => {
-  const res = await api.put(`/tasks/${assignmentId}/review`, reviewData);
+  const res = await api.put(`/tasks/${taskId}/review`, {
+    studentId,
+    status,
+    remark,
+  });
   return res.data;
 };

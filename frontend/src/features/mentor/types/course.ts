@@ -1,5 +1,6 @@
 
-import { type Mentor,type Task } from "./index";
+import type { Mentor } from "./mentor";
+import type { Task } from "./task";
 
 export interface Course {
   course_id: string;

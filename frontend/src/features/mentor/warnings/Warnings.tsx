@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
 import { HelpCircle, Loader2 } from 'lucide-react';
 import { useMentor } from '../../../context/MentorContext';
-import { issueWarning, getStudentWarnings } from '../../../api/warningApi';
-import { type Warning, WarningLevel, WarningStatus, type Student } from '../types';
+import { getStudentWarnings } from '../../../api/warningApi';
+import { type Warning, WarningLevel, type Student } from '../types';
 import WarningForm from './components/WarningForm';
 import toast from 'react-hot-toast';
 
 const Warnings = () => {
-  const { students } = useMentor();
+  const { students, issueWarning: contextIssueWarning } = useMentor();
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
-  const [severity, setSeverity] = useState<WarningLevel>(WarningLevel.LOW);
+  const [warningLevel, setWarningLevel] = useState<WarningLevel>(WarningLevel.LOW);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [isStudentDropdownOpen, setIsStudentDropdownOpen] = useState(false);
@@ -37,22 +37,20 @@ const Warnings = () => {
   }, [selectedStudent]);
 
   const handleIssueWarning = async () => {
-    if (selectedStudent && severity && title && description) {
+    if (selectedStudent && warningLevel && title && description) {
       setIsSubmitting(true);
       try {
-        await issueWarning({
-          student_id: selectedStudent.student_id,
-          level: severity,
+        await contextIssueWarning(
+          selectedStudent.student_id,
+          description,
           title,
-          remark: description,
-          status: WarningStatus.ACTIVE,
-          mentor_id: '' // This will be set by the backend
-        });
+          warningLevel
+        );
         toast.success('Warning issued successfully!');
         await fetchWarnings(selectedStudent.student_id);
         // Reset
         setSelectedStudent(null);
-        setSeverity(WarningLevel.LOW);
+        setWarningLevel(WarningLevel.LOW);
         setTitle('');
         setDescription('');
       } catch (error) {
@@ -66,7 +64,7 @@ const Warnings = () => {
 
   const handleCancel = () => {
     setSelectedStudent(null);
-    setSeverity(WarningLevel.LOW);
+    setWarningLevel(WarningLevel.LOW);
     setTitle('');
     setDescription('');
     setWarnings([]);
@@ -134,8 +132,8 @@ const Warnings = () => {
           students={filteredStudents}
           selectedStudent={selectedStudent}
           setSelectedStudent={setSelectedStudent}
-          severity={severity}
-          setSeverity={setSeverity}
+          severity={warningLevel}
+          setSeverity={setWarningLevel}
           title={title}
           setTitle={setTitle}
           description={description}

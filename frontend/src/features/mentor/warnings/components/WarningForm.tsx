@@ -1,5 +1,5 @@
 import { AlertCircle, ChevronDown, Loader2 } from 'lucide-react';
-import { type Student, WarningLevel } from '../../types/warning';
+import { type Student, WarningLevel } from '../../types';
 
 type SeverityLevel = {
   level: WarningLevel;
@@ -109,11 +109,10 @@ const WarningForm: React.FC<WarningFormProps> = ({
             <button
               key={level.level}
               onClick={() => setSeverity(level.level)}
-              className={`p-4 sm:p-5 border-2 rounded-lg text-left transition-all ${
-                severity === level.level
+              className={`p-4 sm:p-5 border-2 rounded-lg text-left transition-all ${severity === level.level
                   ? `${level.bgColor} ${level.color.replace('hover:', '')}`
                   : `${level.color} bg-white`
-              }`}
+                }`}
             >
               <div className={`w-8 h-8 sm:w-10 sm:h-10 ${level.iconBg} rounded-lg flex items-center justify-center mb-3`}>
                 <span className="text-lg sm:text-2xl">{level.icon}</span>
@@ -161,11 +160,10 @@ const WarningForm: React.FC<WarningFormProps> = ({
         <button
           onClick={handleIssueWarning}
           disabled={!selectedStudent || !severity || !title || !description || isSubmitting}
-          className={`px-6 py-2 rounded-lg flex items-center justify-center gap-2 text-sm sm:text-base order-1 sm:order-2 ${
-            selectedStudent && severity && title && description
+          className={`px-6 py-2 rounded-lg flex items-center justify-center gap-2 text-sm sm:text-base order-1 sm:order-2 ${selectedStudent && severity && title && description
               ? 'bg-red-600 text-white hover:bg-red-700'
               : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-          }`}
+            }`}
         >
           {isSubmitting ? <Loader2 className='animate-spin' /> : <AlertCircle size={16} className="sm:w-[18px] sm:h-[18px]" />}
           Issue Warning

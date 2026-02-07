@@ -7,6 +7,7 @@ import {
   ExternalLink,
   Menu,
   CheckCircle,
+  BookOpen,
 } from "lucide-react";
 import ProgressIndicator from "./ProgressIndicator";
 import Warnings from "../pages/Warnings";
@@ -68,7 +69,6 @@ const CourseModulePage: React.FC = () => {
   const pendingTasks = tasks?.filter((t) => t.status === "PENDING") || [];
   const submittedTasks = tasks?.filter((t) => t.status === "SUBMITTED") || [];
   const rejectedTasks = tasks?.filter((t) => t.status === "REJECTED") || [];
-  const approvedTasks = tasks?.filter((t) => t.status === "APPROVED") || [];
 
   const filteredTasks = (() => {
     if (taskFilterTab === "all") return tasks || [];
@@ -90,7 +90,7 @@ const CourseModulePage: React.FC = () => {
     e.preventDefault();
 
     if (!authUser) {
-      toast.error("You must be logged in to submit tasks. ok.");
+      toast.error("You must be logged in to submit tasks");
       return;
     }
 
@@ -104,7 +104,7 @@ const CourseModulePage: React.FC = () => {
       setGithubLink("");
     } catch (err: unknown) {
       console.error("Submission error:", err);
-      toast.error("Submission failed. ok.");
+      toast.error("Submission failed");
     }
   };
 
@@ -167,7 +167,7 @@ const CourseModulePage: React.FC = () => {
                       Live Class Link
                     </h3>
                     <p className="text-sm text-gray-600 font-mono">
-                      {liveClassLink || "No meeting link scheduled yet. ok."}
+                      {liveClassLink || "No meeting link scheduled yet"}
                     </p>
                   </div>
                 </div>
@@ -184,11 +184,10 @@ const CourseModulePage: React.FC = () => {
                     }
                   }}
                   disabled={!liveClassLink}
-                  className={`px-6 py-2.5 font-medium rounded-lg transition-colors flex items-center gap-2 ${
-                    liveClassLink
-                      ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
-                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                  }`}
+                  className={`px-6 py-2.5 font-medium rounded-lg transition-colors flex items-center gap-2 ${liveClassLink
+                    ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
+                    : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    }`}
                 >
                   Go to URL
                   <ExternalLink className="w-4 h-4" />
@@ -217,16 +216,15 @@ const CourseModulePage: React.FC = () => {
                           <button
                             key={tab}
                             onClick={() => setTaskFilterTab(tab)}
-                            className={`pb-3 font-medium capitalize whitespace-nowrap relative ${
-                              taskFilterTab === tab
-                                ? "text-indigo-600"
-                                : "text-gray-600 hover:text-gray-900"
-                            }`}
+                            className={`pb-3 font-medium capitalize whitespace-nowrap relative ${taskFilterTab === tab
+                              ? "text-indigo-600"
+                              : "text-gray-600 hover:text-gray-900"
+                              }`}
                           >
                             {tab === "all" && "All Tasks"}
                             {tab === "pending" && "Pending"}
                             {tab === "submitted" && "Submitted"}
-                              {tab === "rejected" && "Rejected"}
+                            {tab === "rejected" && "Rejected"}
                             {counts[tab] > 0 && (
                               <span className="ml-2 px-2 py-0.5 bg-indigo-100 text-indigo-600 text-xs rounded-full">
                                 {counts[tab]}
@@ -254,11 +252,10 @@ const CourseModulePage: React.FC = () => {
                         <button
                           key={task.task_id}
                           onClick={() => handleTaskClick(task.task_id)}
-                          className={`w-full flex items-center justify-between p-4 border-2 rounded-xl transition-all ${
-                            selectedTask === task.task_id
-                              ? "bg-indigo-50 border-indigo-500"
-                              : "bg-white border-indigo-200 hover:border-indigo-400"
-                          }`}
+                          className={`w-full flex items-center justify-between p-4 border-2 rounded-xl transition-all ${selectedTask === task.task_id
+                            ? "bg-indigo-50 border-indigo-500"
+                            : "bg-white border-indigo-200 hover:border-indigo-400"
+                            }`}
                         >
                           <div className="text-left flex-1">
                             <div className="flex items-center justify-between">
@@ -311,24 +308,38 @@ const CourseModulePage: React.FC = () => {
                           {activeTask.task.description}
                         </p>
 
+                        {activeTask.task.doc_link && (
+                          <div className="mb-6">
+                            <button
+                              onClick={() => {
+                                const url = activeTask.task.doc_link!.startsWith("http")
+                                  ? activeTask.task.doc_link!
+                                  : `https://${activeTask.task.doc_link}`;
+                                window.open(url, "_blank");
+                              }}
+                              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-50 text-indigo-700 font-semibold rounded-xl border border-indigo-200 hover:bg-indigo-100 transition-colors"
+                            >
+                              <BookOpen size={18} />
+                              View Task Documentation
+                            </button>
+                          </div>
+                        )}
+
                         {activeTask.mentor_remark && (
-                          <div className={`rounded-lg p-4 mb-6 border-l-4 ${
-                            activeTask.status === "REJECTED"
-                              ? "bg-red-50 border-red-500"
-                              : "bg-blue-50 border-blue-500"
-                          }`}>
-                            <p className={`text-sm font-semibold mb-2 ${
-                              activeTask.status === "REJECTED"
-                                ? "text-red-900"
-                                : "text-blue-900"
+                          <div className={`rounded-lg p-4 mb-6 border-l-4 ${activeTask.status === "REJECTED"
+                            ? "bg-red-50 border-red-500"
+                            : "bg-blue-50 border-blue-500"
                             }`}>
+                            <p className={`text-sm font-semibold mb-2 ${activeTask.status === "REJECTED"
+                              ? "text-red-900"
+                              : "text-blue-900"
+                              }`}>
                               {activeTask.status === "REJECTED" ? "Rejection Feedback" : "Mentor Feedback"}
                             </p>
-                            <p className={`text-sm ${
-                              activeTask.status === "REJECTED"
-                                ? "text-red-800"
-                                : "text-blue-800"
-                            }`}>
+                            <p className={`text-sm ${activeTask.status === "REJECTED"
+                              ? "text-red-800"
+                              : "text-blue-800"
+                              }`}>
                               {activeTask.mentor_remark}
                             </p>
                           </div>
@@ -362,7 +373,7 @@ const CourseModulePage: React.FC = () => {
                               <div>
                                 <p className="font-bold">Task {activeTask.status}</p>
                                 <p className="text-sm opacity-90">
-                                  {activeTask.status === "SUBMITTED" ? "Waiting for review. ok." : "Great job!"}
+                                  {activeTask.status === "SUBMITTED" ? "Waiting for review" : "Great job!"}
                                 </p>
                               </div>
                             </div>

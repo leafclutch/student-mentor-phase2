@@ -2,10 +2,8 @@ import type { FC } from "react";
 import {
   LayoutDashboard,
   GraduationCap,
-  MessageSquare,
   Bell,
   AlertTriangle,
-  Settings,
   LogOut,
   ClipboardCheck,
   BookOpenCheck,
@@ -21,16 +19,17 @@ type SidebarProps = {
 
 const Sidebar: FC<SidebarProps> = ({ isSidebarOpen, setIsSidebarOpen }) => {
   const { logout, authUser } = useAuth();
-  const { notifications, dashboard } = useMentor();
+  const { notifications, dashboard, assignments } = useMentor();
   const navigate = useNavigate();
   const location = useLocation();
 
   if (!authUser) return null;
 
-  const mentorName = dashboard?.mentor?.name || authUser.name || "Mentor";
-  const mentorPhoto = dashboard?.mentor?.photo;
+  const mentorName = dashboard?.name || authUser.name || "Mentor";
+  const mentorPhoto = dashboard?.photo;
 
   const unreadCount = notifications?.filter((n) => !n.isRead).length || 0;
+  const pendingReviewsCount = assignments?.filter((a) => a.status === "SUBMITTED").length || 0;
 
   const initials = mentorName
     .split(" ")
@@ -49,16 +48,16 @@ const Sidebar: FC<SidebarProps> = ({ isSidebarOpen, setIsSidebarOpen }) => {
   const menuItems: MenuItem[] = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/mentor/dashboard" },
     { icon: GraduationCap, label: "My Students", path: "/mentor/students" },
-    { 
-      icon: BookOpenCheck, 
-      label: "Task Library", 
-      path: "/mentor/tasks" 
+    {
+      icon: BookOpenCheck,
+      label: "Task Library",
+      path: "/mentor/tasks"
     },
-    { 
-      icon: ClipboardCheck, 
-      label: "Task Reviews", 
-      path: "/mentor/reviews", 
-      badge: 2 
+    {
+      icon: ClipboardCheck,
+      label: "Task Reviews",
+      path: "/mentor/reviews",
+      badge: pendingReviewsCount
     },
     {
       icon: Bell,
@@ -76,9 +75,8 @@ const Sidebar: FC<SidebarProps> = ({ isSidebarOpen, setIsSidebarOpen }) => {
 
   return (
     <div
-      className={`fixed inset-y-0 left-0 z-30 w-64 bg-white border-r border-gray-200 h-screen flex flex-col shrink-0 transform ${
-        isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-      } lg:relative lg:translate-x-0 transition-transform duration-200 ease-in-out`}
+      className={`fixed inset-y-0 left-0 z-30 w-64 bg-white border-r border-gray-200 h-screen flex flex-col shrink-0 transform ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+        } lg:relative lg:translate-x-0 transition-transform duration-200 ease-in-out`}
     >
       {/* Profile Section */}
       <div className="p-6 border-b border-gray-200">
@@ -122,10 +120,9 @@ const Sidebar: FC<SidebarProps> = ({ isSidebarOpen, setIsSidebarOpen }) => {
                 to={item.path}
                 onClick={() => setIsSidebarOpen(false)}
                 className={({ isActive }) =>
-                  `w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
-                    isActive
-                      ? "bg-blue-600 text-white shadow-lg shadow-blue-100"
-                      : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
+                  `w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${isActive
+                    ? "bg-blue-600 text-white shadow-lg shadow-blue-100"
+                    : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
                   }`
                 }
               >
@@ -142,11 +139,10 @@ const Sidebar: FC<SidebarProps> = ({ isSidebarOpen, setIsSidebarOpen }) => {
                 </span>
                 {item.badge && item.badge > 0 ? (
                   <span
-                    className={`${
-                      location.pathname === item.path
-                        ? "bg-white text-blue-600"
-                        : "bg-red-500 text-white"
-                    } text-[10px] font-black rounded-full min-w-[20px] h-5 px-1 flex items-center justify-center`}
+                    className={`${location.pathname === item.path
+                      ? "bg-white text-blue-600"
+                      : "bg-red-500 text-white"
+                      } text-[10px] font-black rounded-full min-w-[20px] h-5 px-1 flex items-center justify-center`}
                   >
                     {item.badge}
                   </span>
@@ -159,10 +155,6 @@ const Sidebar: FC<SidebarProps> = ({ isSidebarOpen, setIsSidebarOpen }) => {
 
       {/* Bottom Actions */}
       <div className="p-4 border-t border-gray-200 space-y-1">
-        <button className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-colors text-sm font-medium">
-          <Settings size={18} />
-          <span>Settings</span>
-        </button>
         <button
           className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors text-sm font-bold"
           onClick={handleLogout}

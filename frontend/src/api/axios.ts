@@ -2,6 +2,7 @@ import axios from "axios";
 
 const BASE_URL =
   import.meta.env.VITE_API_URL || "https://student-mentor-phase2.vercel.app";
+  // import.meta.env.VITE_API_URL || "http://localhost:8004";
 
 const api = axios.create({
   baseURL: BASE_URL,

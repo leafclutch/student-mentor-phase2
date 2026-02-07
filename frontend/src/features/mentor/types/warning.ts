@@ -1,5 +1,6 @@
 
-import { type Student, type Mentor } from "./index";
+import type { Student } from "./student";
+import type { Mentor } from "./mentor";
 
 export enum WarningLevel {
   LOW = "LOW",

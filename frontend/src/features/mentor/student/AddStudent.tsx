@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Loader2, Plus } from "lucide-react";
 import { useMentor } from "../../../context/MentorContext";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 const AddStudent = () => {
   const { createNewStudent } = useMentor();
@@ -17,11 +18,11 @@ const AddStudent = () => {
     setIsSubmitting(true);
     try {
       await createNewStudent({ name, email, password });
-      alert("Student created successfully!");
+      toast.success("Student created successfully");
       navigate("/mentor/students");
     } catch (err) {
       console.error("Failed to create student", err);
-      alert("Failed to create student. Please try again.");
+      toast.error("Failed to create student. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

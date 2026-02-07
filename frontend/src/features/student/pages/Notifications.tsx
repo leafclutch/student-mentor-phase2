@@ -59,7 +59,7 @@ const Notifications: React.FC = () => {
   });
 
   if (loading)
-    return <div className="p-10 text-center text-gray-400">Loading... ok.</div>;
+    return <div className="p-10 text-center text-gray-400">Loading...</div>;
 
   return (
     <div className="bg-gray-50 p-4 sm:p-6 lg:p-8">
@@ -86,7 +86,6 @@ const Notifications: React.FC = () => {
 
         <div className="flex gap-6 border-b border-gray-200 mb-6 overflow-x-auto">
           {(["all", "unread", "read"] as const).map((tab) => {
-            // ok, fix for the badge counter
             const unreadItemsCount = (notifications ?? []).filter(
               (n) => !(n.isRead === true || !!n.readAt)
             ).length;
@@ -95,11 +94,10 @@ const Notifications: React.FC = () => {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`pb-3 font-medium capitalize whitespace-nowrap relative ${
-                  activeTab === tab
+                className={`pb-3 font-medium capitalize whitespace-nowrap relative ${activeTab === tab
                     ? "text-indigo-600"
                     : "text-gray-600 hover:text-gray-900"
-                }`}
+                  }`}
               >
                 {tab}
                 {tab === "unread" && unreadItemsCount > 0 && (
@@ -131,7 +129,7 @@ const Notifications: React.FC = () => {
             ))
           ) : (
             <div className="text-center py-20 bg-white rounded-xl border border-dashed border-gray-200">
-              <p className="text-gray-400">No notifications found. ok.</p>
+              <p className="text-gray-400">No notifications found</p>
             </div>
           )}
         </div>
@@ -159,13 +157,12 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
 }) => (
   <div
     onClick={() => onRead()}
-    className={`rounded-xl cursor-pointer p-5 shadow-sm hover:shadow-md transition border-l-4 ${
-      danger
+    className={`rounded-xl cursor-pointer p-5 shadow-sm hover:shadow-md transition border-l-4 ${danger
         ? "bg-red-50 border-red-500"
         : highlight
-        ? "bg-white border-indigo-500"
-        : "bg-white border-transparent"
-    }`}
+          ? "bg-white border-indigo-500"
+          : "bg-white border-transparent"
+      }`}
   >
     <div className="flex items-start justify-between gap-4">
       <div className="flex gap-4">

@@ -15,12 +15,17 @@ import type { Course } from "../../auth/types/student";
 /* ---------------- COMPONENT ---------------- */
 
 const ProgressIndicator: React.FC = () => {
-  const { progressReport } = useStudent();
+  const { progressReport, tasks } = useStudent();
 
-  const completed = progressReport?.taskStats?.submitted ?? 0;
-  const totalTask = progressReport?.taskStats?.totalTasks ?? 0;
-  const pending = progressReport?.taskStats?.pending ?? 0;
-  const progressPercent = progressReport?.completionPercentage ?? 0;
+  // Calculate dynamic stats from the tasks array
+  const totalTask = tasks?.length ?? 0;
+  const approved = tasks?.filter(t => t.status === "APPROVED").length ?? 0;
+  const submitted = tasks?.filter(t => t.status === "SUBMITTED").length ?? 0;
+  const pending = tasks?.filter(t => t.status === "PENDING" || t.status === "REJECTED").length ?? 0;
+
+  // Progress calculation based on approved tasks
+  const progressPercent = totalTask > 0 ? Math.round((approved / totalTask) * 100) : 0;
+  const completed = approved; // Rename for clarity in UI
 
   return (
     <div className="bg-gray-50 p-4 md:p-8">
@@ -36,7 +41,7 @@ const ProgressIndicator: React.FC = () => {
             <div>
               <h2 className="text-lg font-semibold uppercase tracking-wide">
                 Course Completion
-              </h2> 
+              </h2>
               <p className="text-indigo-100 text-sm mt-1">
                 Overall progress based on completed tasks
               </p>
@@ -81,13 +86,13 @@ const ProgressIndicator: React.FC = () => {
           />
           <StatCard
             label="Pending"
-            value={pending}
+            value={submitted}
             icon={<Clock className="text-yellow-600 w-5 h-5" />}
             bg="bg-yellow-100"
           />
           <StatCard
             label="Locked"
-            value={0}
+            value={pending}
             icon={<Lock className="text-red-600 w-5 h-5" />}
             bg="bg-red-100"
           />

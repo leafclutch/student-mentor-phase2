@@ -9,8 +9,8 @@ import {
   UserX,
 } from "lucide-react";
 import { useMentor } from "../../../context/MentorContext";
-import { getAllTasks, createTask } from "../../../api/taskApi";
-import type { Student, Task } from "../types";
+import { getAllTasks } from "../../../api/taskApi";
+import { WarningLevel, type Student, type Task } from "../types";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 
@@ -19,7 +19,7 @@ const MyStudents = () => {
 
   // Search state
   const [studentSearch, setStudentSearch] = useState("");
-  
+
   // UI States
   const [loadingStudents, setLoadingStudents] = useState(true);
   const [showAssignModal, setShowAssignModal] = useState(false);
@@ -36,7 +36,7 @@ const MyStudents = () => {
   // Warning States
   const [warningTitle, setWarningTitle] = useState("");
   const [warningRemark, setWarningRemark] = useState("");
-  const [warningLevel, setWarningLevel] = useState<"LOW" | "MEDIUM" | "HIGH">("LOW");
+  const [warningLevel, setWarningLevel] = useState<WarningLevel>(WarningLevel.LOW);
 
   useEffect(() => {
     if (students) setLoadingStudents(false);
@@ -50,7 +50,7 @@ const MyStudents = () => {
           const data = await getAllTasks();
           setLibrary(data);
         } catch (err) {
-          console.error("Library fetch failed. ok.", err);
+          console.error("Library fetch failed.", err);
         } finally {
           setLoadingLibrary(false);
         }
@@ -73,9 +73,9 @@ const MyStudents = () => {
       await assignNewTask(targetStudent.student_id, selectedTaskId);
       setShowAssignModal(false);
       setSelectedTaskId(null);
-      alert("Task assigned successfully. ok.");
+      toast.success("Task assigned successfully");
     } catch (err) {
-      console.error("Assignment failed. ok.", err);
+      console.error("Assignment failed", err);
     } finally {
       setIsSubmitting(false);
     }
@@ -94,9 +94,9 @@ const MyStudents = () => {
       setShowWarningModal(false);
       setWarningRemark("");
       setWarningTitle("");
-      alert("Warning issued. ok.");
+      toast.success("Warning issued");
     } catch (err) {
-      console.error("Warning failed. ok.", err);
+      console.error("Warning failed", err);
     } finally {
       setIsSubmitting(false);
     }
@@ -108,7 +108,7 @@ const MyStudents = () => {
         <h1 className="text-xl font-black uppercase tracking-tight text-gray-900">
           Student Management
         </h1>
-        
+
         <div className="flex items-center gap-2">
           <Link to="/mentor/students/add" className="flex items-center gap-2 bg-green-600 text-white px-5 py-2.5 rounded-xl text-xs font-black uppercase hover:bg-green-700 transition-all shadow-lg shadow-green-100">
             <Plus size={14} /> Add Student
@@ -182,7 +182,7 @@ const MyStudents = () => {
       ) : (
         <div className="flex flex-col items-center justify-center py-20 text-gray-400">
           <UserX size={48} className="mb-4 opacity-20" />
-          <p className="text-xs font-black uppercase tracking-widest">No students found. ok.</p>
+          <p className="text-xs font-black uppercase tracking-widest">No students found</p>
         </div>
       )}
 
@@ -216,9 +216,8 @@ const MyStudents = () => {
                         <div
                           key={task.task_id}
                           onClick={() => setSelectedTaskId(task.task_id)}
-                          className={`p-4 border rounded-2xl cursor-pointer flex justify-between items-center transition-all ${
-                            selectedTaskId === task.task_id ? "border-blue-600 bg-blue-50" : "border-gray-50 bg-gray-50/50"
-                          }`}
+                          className={`p-4 border rounded-2xl cursor-pointer flex justify-between items-center transition-all ${selectedTaskId === task.task_id ? "border-blue-600 bg-blue-50" : "border-gray-50 bg-gray-50/50"
+                            }`}
                         >
                           <div>
                             <h4 className="text-xs font-black">{task.title}</h4>
@@ -263,13 +262,12 @@ const MyStudents = () => {
                 className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-red-500"
               />
               <div className="flex gap-2">
-                {(["LOW", "MEDIUM", "HIGH"] as const).map((level) => (
+                {[WarningLevel.LOW, WarningLevel.MEDIUM, WarningLevel.HIGH].map((level) => (
                   <button
                     key={level}
                     onClick={() => setWarningLevel(level)}
-                    className={`flex-1 py-3 rounded-xl text-[10px] font-black border transition-all ${
-                      warningLevel === level ? "bg-red-600 border-red-600 text-white shadow-lg shadow-red-100" : "bg-white border-gray-200 text-gray-400"
-                    }`}
+                    className={`flex-1 py-3 rounded-xl text-[10px] font-black border transition-all ${warningLevel === level ? "bg-red-600 border-red-600 text-white shadow-lg shadow-red-100" : "bg-white border-gray-200 text-gray-400"
+                      }`}
                   >
                     {level}
                   </button>
