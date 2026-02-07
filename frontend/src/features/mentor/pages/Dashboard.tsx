@@ -182,7 +182,7 @@ const Dashboard = () => {
               <div className="space-y-3">
                 {assignments.slice(0, 5).map((assignment) => (
                   <div
-                    key={assignment.assignment_id}
+                    key={assignment.id}
                     className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                   >
                     <div className="flex-1">
