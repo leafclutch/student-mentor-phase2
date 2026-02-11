@@ -1,17 +1,27 @@
-// File: src/context/StudentContext.tsx
-
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import type { StudentAssignment, StudentDashboard } from "../features/auth/types/student";
-import type { NotificationsResponse, Notification } from "../features/auth/types/notification";
-import { 
-    getAssignTasks, 
-    getStudentDashboard, 
-    getProgressReport, 
-    submitTask, 
-    getStudentWarnings, 
-    getStudentNotifications,
-    markAsRead,
-    markAsReadAll,
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
+import type {
+  StudentAssignment,
+  StudentDashboard,
+} from "../features/auth/types/student";
+import type {
+  Notification,
+} from "../features/auth/types/notification";
+import {
+  getAssignTasks,
+  getStudentDashboard,
+  getProgressReport,
+  submitTask,
+  getStudentWarnings,
+  getStudentNotifications,
+  markAsRead,
+  markAsReadAll,
+  resolveWarning,
 } from "../api/studentApi";
 import toast from "react-hot-toast";
 import type { WarningsResponse } from "../features/auth/types/warning";
@@ -20,200 +30,216 @@ import type { TaskStatsResponse } from "../features/auth/types/progress";
 /* ------------------ Types ------------------ */
 
 type StudentContextType = {
-    tasks: StudentAssignment[] | null;
-    dashboard: StudentDashboard | null;
-    progressReport: TaskStatsResponse | null;
-    warning: WarningsResponse[] | null;
-    notifications: Notification[] | null;
-    loading: boolean;
-    studentDashboard: () => Promise<void>;
-    fetchTasks: () => Promise<void>;
-    fetchProgressReport: () => Promise<void>;
-    fetchStudentWarnings: () => Promise<void>;
-    fetchNotifications: () => Promise<void>;
-    submitStudentTask: (studentId: string, link:string) => Promise<void>;
-    markNotificationAsRead: (notificationId: string) => Promise<void>;
-    markAllNotificationsAsRead: () => Promise<void>;
+  tasks: StudentAssignment[] | null;
+  dashboard: StudentDashboard | null;
+  progressReport: TaskStatsResponse | null;
+  warning: WarningsResponse | null;
+  notifications: Notification[] | null;
+  unreadCount: number;
+  loading: boolean;
+  studentDashboard: () => Promise<void>;
+  fetchTasks: () => Promise<void>;
+  fetchProgressReport: () => Promise<void>;
+  fetchStudentWarnings: () => Promise<void>;
+  fetchNotifications: () => Promise<void>;
+  submitStudentTask: (
+    taskId: string,
+    studentId: string,
+    link: string
+  ) => Promise<void>;
+  resolveWarningAction: (warningId: string, comment: string) => Promise<void>;
+  markNotificationAsRead: (notificationId: string) => Promise<void>;
+  markAllNotificationsAsRead: () => Promise<void>;
 };
-
-/* ------------------ Context ------------------ */
 
 const StudentContext = createContext<StudentContextType | undefined>(undefined);
 
 /* ------------------ Provider ------------------ */
 
+import { useAuth } from "./AuthContext";
+
 export const StudentProvider = ({ children }: { children: ReactNode }) => {
-    const [dashboard, setDashboard] = useState<StudentDashboard | null>(null);
-    const [tasks, setTasks] = useState<StudentAssignment[] | null>(null);
-    const [progressReport, setProgressReport] = useState<TaskStatsResponse | null>(null);
-    const [warning, setWarning] = useState<WarningsResponse[] | null>(null);
-    const [notifications, setNotifications] = useState<Notification[] | null>(null);
-    const [loading, setLoading] = useState<boolean>(false);
+  const [dashboard, setDashboard] = useState<StudentDashboard | null>(null);
+  const [tasks, setTasks] = useState<StudentAssignment[] | null>(null);
+  const [progressReport, setProgressReport] =
+    useState<TaskStatsResponse | null>(null);
+  const [warning, setWarning] = useState<WarningsResponse | null>(null);
+  const [notifications, setNotifications] = useState<Notification[] | null>(
+    null
+  );
+  const [loading, setLoading] = useState<boolean>(false);
+  const { authUser } = useAuth();
 
-    // student dashboard
-    const studentDashboard = async () => {
-        setLoading(true);
-        try {
-            const response = await getStudentDashboard();
-            setDashboard(response);
-            console.log("Student dashboard data:", response);
-        } catch (err: any) {
-            toast.error(err?.response?.data.message ?? "Unknown error");
-        } finally {
-            setLoading(false);
-        }
-    };
+  const studentDashboard = async () => {
+    if (!authUser || authUser.role !== "STUDENT") return;
+    setLoading(true);
+    try {
+      const response = await getStudentDashboard();
+      setDashboard(response);
+    } catch (err: unknown) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    // Fetch all tasks
-    const fetchTasks = async () => {
-        setLoading(true);
-        try {
-            const response = await getAssignTasks();
-            setTasks(response);
-            console.log("All Tasks:", response);
-        } catch (err: any) {
-            toast.error(err?.response?.data.message ?? "Unknown error");
-        } finally {
-            setLoading(false);
-        }
-    };
+  const fetchTasks = async () => {
+    if (!authUser || authUser.role !== "STUDENT") return;
+    setLoading(true);
+    try {
+      const response = await getAssignTasks();
+      const actualTasks = Array.isArray(response) ? response : response.tasks;
+      setTasks(actualTasks || []);
+    } catch {
+      toast.error("Failed to fetch tasks");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    useEffect(() => {
-        if (tasks) {
-          console.log("Now tasks is ready:", tasks);
-        }
-      }, [tasks]);
-      
+  const fetchProgressReport = async () => {
+    if (!authUser || authUser.role !== "STUDENT") return;
+    try {
+      const response = await getProgressReport();
+      setProgressReport(response);
+    } catch (err: unknown) {
+      console.error(err);
+    }
+  };
 
-    // Progress (Report) API
-    const fetchProgressReport = async () => {
-        setLoading(true);
-        try {
-            const response = await getProgressReport();
-            setProgressReport(response);
-            console.log("Progress Report:", response);
-        } catch (err: any) {
-            toast.error(err?.response?.data.message ?? "Unknown error");
-        } finally {
-            setLoading(false);
-        }
-    };
+  const fetchStudentWarnings = async () => {
+    if (!authUser || authUser.role !== "STUDENT") return;
+    try {
+      const response = await getStudentWarnings();
+      // Calculate counts since the API only returns warnings list
+      const warnings = response.warnings || [];
+      const counts = {
+        active: warnings.filter(w => w.status === "ACTIVE").length,
+        resolved: warnings.filter(w => w.status === "RESOLVED").length
+      };
+      setWarning({ warnings, counts });
+    } catch (err: unknown) {
+      console.error(err);
+    }
+  };
 
-    // Fetch warnings for the student
-    const fetchStudentWarnings = async () => {
-        setLoading(true);
-        try {
-            const response = await getStudentWarnings();
-            setWarning(response);
-            console.log("Student warnings:", response);
-        } catch (err: any) {
-            toast.error(err?.response?.data.message ?? "Failed to fetch warnings");
-        } finally {
-            setLoading(false);
-        }
-    };
+  const fetchNotifications = async () => {
+    if (!authUser || authUser.role !== "STUDENT") return;
+    try {
+      const response = await getStudentNotifications();
+      const actualNotifications = Array.isArray(response) ? response : response.notifications;
+      setNotifications(actualNotifications || []);
+    } catch (err: unknown) {
+      console.error("Fetch notifications failed", err);
+    }
+  };
 
-    // Fetch notifications for the student
-    const fetchNotifications = async () => {
-        setLoading(true);
-        try {
-            const response: NotificationsResponse = await getStudentNotifications();
-            setNotifications(response);
-            console.log("Student notifications:", response);
-        } catch (err: any) {
-            toast.error(err?.response?.data.message ?? "Failed to fetch notifications");
-        } finally {
-            setLoading(false);
-        }
-    };
+  const markNotificationAsRead = async (notificationId: string) => {
+    setNotifications((prev) => {
+      if (!prev) return null;
+      return prev.map((n) =>
+        n.id === notificationId ? { ...n, readAt: new Date().toISOString() } : n
+      );
+    });
 
-    // Mark a notification as read
-    const markNotificationAsRead = async (notificationId: string) => {
-        setLoading(true);
-        try {
-            await markAsRead(notificationId);
-            
-            // // Refetch notifications after marking as read
-        } catch (err: any) {
-            toast.error(err?.response?.data.message ?? "Failed to mark notification as read");
-        } finally {
-            setLoading(false);
-        }
-    };
+    try {
+      await markAsRead(notificationId);
+      await fetchNotifications();
+    } catch (err) {
+      console.error("Failed to mark as read", err);
+      await fetchNotifications();
+    }
+  };
 
-    // Mark all notifications as read
-    const markAllNotificationsAsRead = async () => {
-        setLoading(true);
-        try {
-            await markAsReadAll();
-        } catch (err: any) {
-            toast.error(err?.response?.data.message ?? "Failed to mark all notifications as read");
-        } finally {
-            setLoading(false);
-        }
-    };
+  const markAllNotificationsAsRead = async () => {
+    setNotifications((prev) => {
+      if (!prev) return null;
+      return prev.map((n) => ({ ...n, readAt: new Date().toISOString() }));
+    });
 
-    // Function to submit a task by studentId
-    const submitStudentTask = async (studentId: string, link:string) => {
-        setLoading(true);
-        try {
-            const response = await submitTask(studentId, link);
-            studentDashboard();
-            fetchTasks();
-            fetchProgressReport();
-            return response;
-        } catch (err: any) {
-            toast.error(err?.response?.data.message ?? "Failed to submit task");
-        } finally {
-            setLoading(false);
-        }
-    };
+    try {
+      await markAsReadAll();
+      await fetchNotifications();
+    } catch {
+      await fetchNotifications();
+      toast.error("Error marking all read");
+    }
+  };
 
-    useEffect(() => {
-        studentDashboard();
-        fetchTasks(); // fetch all tasks
-        fetchProgressReport();
-        fetchStudentWarnings();
-        fetchNotifications();
+  const submitStudentTask = async (
+    taskId: string,
+    studentId: string,
+    link: string
+  ) => {
+    try {
+      await submitTask(taskId, studentId, link);
+      await fetchTasks();
+      toast.success("Submitted successfully");
+    } catch {
+      toast.error("Failed to submit task");
+    }
+  };
 
-        console.log(tasks)
-    }, []);
+  const resolveWarningAction = async (
+    warningId: string,
+    comment: string
+  ): Promise<void> => {
+    try {
+      await resolveWarning(warningId, comment);
+      await fetchStudentWarnings();
+      toast.success("Warning resolved successfully");
+    } catch (err: unknown) {
+      console.error("Failed to resolve warning:", err);
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to resolve warning";
+      toast.error(errorMessage);
+      throw err;
+    }
+  };
 
-    useEffect(() => {
-    //   fetchNotifications()
-    }, [notifications])
-    
+  useEffect(() => {
+    if (authUser && authUser.role === "STUDENT") {
+      studentDashboard();
+      fetchTasks();
+      fetchProgressReport();
+      fetchStudentWarnings();
+      fetchNotifications();
+    }
+  }, [authUser]);
 
-    return (
-        <StudentContext.Provider
-            value={{
-                tasks,
-                loading,
-                dashboard,
-                progressReport,
-                warning,
-                notifications,
-                studentDashboard,
-                fetchTasks,
-                fetchProgressReport,
-                fetchStudentWarnings,
-                fetchNotifications,
-                submitStudentTask,
-                markNotificationAsRead,
-                markAllNotificationsAsRead,
-            }}
-        >
-            {children}
-        </StudentContext.Provider>
-    );
+  const unreadCount =
+    notifications?.filter((n) => !(n.isRead === true || !!n.readAt)).length ||
+    0;
+
+  return (
+    <StudentContext.Provider
+      value={{
+        tasks,
+        loading,
+        dashboard,
+        progressReport,
+        warning,
+        notifications,
+        unreadCount,
+        studentDashboard,
+        fetchTasks,
+        fetchProgressReport,
+        fetchStudentWarnings,
+        fetchNotifications,
+        submitStudentTask,
+        resolveWarningAction,
+        markNotificationAsRead,
+        markAllNotificationsAsRead,
+      }}
+    >
+      {children}
+    </StudentContext.Provider>
+  );
 };
 
-/* ------------------ Hook ------------------ */
-
 export const useStudent = () => {
-    const context = useContext(StudentContext);
-    if (!context) {
-        throw new Error("useStudent must be used within a StudentProvider");
-    }
-    return context;
+  const context = useContext(StudentContext);
+  if (!context)
+    throw new Error("useStudent must be used within a StudentProvider");
+  return context;
 };

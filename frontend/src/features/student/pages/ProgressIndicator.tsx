@@ -1,5 +1,4 @@
 import React from "react";
-import type { Task } from "../types";
 import {
   CheckCircle,
   Clock,
@@ -11,53 +10,26 @@ import {
   Layers,
 } from "lucide-react";
 import { useStudent } from "../../../context/StudentContext";
-
-/* ---------------- MOCK DATA (replace with API later) ---------------- */
-
-// const mockTasks: Task[] = [
-//   {
-//     task_id: 1,
-//     title: "HTML Basics",
-//     status: "completed",
-//   },
-//   {
-//     task_id: 2,
-//     title: "CSS Fundamentals",
-//     status: "completed",
-//   },
-//   {
-//     task_id: 3,
-//     title: "Responsive Design",
-//     status: "in_progress",
-//   },
-//   {
-//     task_id: 4,
-//     title: "JavaScript Basics",
-//     status: "pending",
-//   },
-//   {
-//     task_id: 5,
-//     title: "React Introduction",
-//     status: "pending",
-//   },
-// ];
+import type { Course } from "../../auth/types/student";
 
 /* ---------------- COMPONENT ---------------- */
 
 const ProgressIndicator: React.FC = () => {
-  // const tasks: Task[] = mockTasks;
-  const { progressReport } = useStudent()
+  const { progressReport, tasks } = useStudent();
 
-const completed = progressReport?.taskStats?.submitted ?? 0;
-const totalTask = progressReport?.taskStats?.totalTasks ?? 0;
-const pending = progressReport?.taskStats?.pending ?? 0;
+  // Calculate dynamic stats from the tasks array
+  const totalTask = tasks?.length ?? 0;
+  const approved = tasks?.filter(t => t.status === "APPROVED").length ?? 0;
+  const submitted = tasks?.filter(t => t.status === "SUBMITTED").length ?? 0;
+  const pending = tasks?.filter(t => t.status === "PENDING" || t.status === "REJECTED").length ?? 0;
 
-  const progressPercent = progressReport?.completionPercentage ?? 0
+  // Progress calculation based on approved tasks
+  const progressPercent = totalTask > 0 ? Math.round((approved / totalTask) * 100) : 0;
+  const completed = approved; // Rename for clarity in UI
 
   return (
     <div className="bg-gray-50 p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-8">
-
         {/* Page Title */}
         <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
           Progress Indicator
@@ -114,13 +86,13 @@ const pending = progressReport?.taskStats?.pending ?? 0;
           />
           <StatCard
             label="Pending"
-            value={pending}
+            value={submitted}
             icon={<Clock className="text-yellow-600 w-5 h-5" />}
             bg="bg-yellow-100"
           />
           <StatCard
             label="Locked"
-            value={0}
+            value={pending}
             icon={<Lock className="text-red-600 w-5 h-5" />}
             bg="bg-red-100"
           />
@@ -144,17 +116,20 @@ const pending = progressReport?.taskStats?.pending ?? 0;
           </div>
 
           <div className="space-y-4">
-            {progressReport?.courses.map((course:any) => (
-              <TaskRow key={course.course_id} task={course} />
-            ))}
+            {/* Logic: Mapping directly over the array. ok. */}
+            {progressReport?.courses && Array.isArray(progressReport.courses) ? (
+              progressReport.courses.map((course: Course) => (
+                <TaskRow key={course.course_id} course={course} progress={progressPercent} />
+              ))
+            ) : (
+              <p className="text-gray-500 text-center py-4">No modules found.</p>
+            )}
           </div>
         </div>
       </div>
     </div>
   );
 };
-
-export default ProgressIndicator;
 
 /* ---------- Helper Components ---------- */
 
@@ -180,7 +155,10 @@ const StatCard = ({
   </div>
 );
 
-const TaskRow = ({ task }: { task: Task }) => {
+const TaskRow = ({ course, progress }: { course: Course; progress: number }) => {
+  // Street-smart fallback: If no status from backend, infer from progress %
+  const currentStatus = progress === 100 ? "completed" : progress > 0 ? "in_progress" : "pending";
+
   const statusMap = {
     completed: {
       label: "Completed",
@@ -199,7 +177,7 @@ const TaskRow = ({ task }: { task: Task }) => {
     },
   };
 
-  const status = statusMap[task.status];
+  const status = statusMap[currentStatus as keyof typeof statusMap];
 
   return (
     <div className="flex items-center justify-between p-4 border rounded-xl hover:shadow transition">
@@ -209,17 +187,16 @@ const TaskRow = ({ task }: { task: Task }) => {
         </div>
 
         <div>
-          <h3 className="font-semibold text-gray-900">{task.title}</h3>
-          <p className="text-sm text-gray-500">Task ID: {task.course_id}</p>
+          <h3 className="font-semibold text-gray-900">{course.title}</h3>
+          <p className="text-sm text-gray-500">Course ID: {course.course_id}</p>
         </div>
       </div>
 
       <div className="flex items-center gap-4">
-        <span className={`px-4 py-1.5 rounded-lg text-sm font-medium ${status?.badge}`}>
-          {status?.label}
-        </span>
         <ChevronRight className="w-5 h-5 text-gray-400" />
       </div>
     </div>
   );
 };
+
+export default ProgressIndicator;

@@ -1,6 +1,7 @@
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL")
 }
 
 generator client {
@@ -38,7 +39,7 @@ enum NotificationType {
   WARNING_ISSUED
   COURSE_CREATED
   SYSTEM_ANNOUNCEMENT
-}
+  }
 
 
 
