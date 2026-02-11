@@ -1,37 +1,27 @@
 import { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useMentor } from '../../../context/MentorContext';
-import { getNotifications, sendNotification } from '../../../api/notificationApi';
-import { type Notification, NotificationType } from '../types';
+import { sendNotification } from '../../../api/notificationApi';
+import { NotificationType } from '../types';
 import NotificationForm from './components/NotificationForm';
 import toast from 'react-hot-toast';
 
 const Notifications: React.FC = () => {
-  const { students } = useMentor();
+  const { students, notifications, fetchNotifications, markAsRead, markAllAsRead } = useMentor();
   const [recipients, setRecipients] = useState<'all' | 'specific'>('all');
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
   const [title, setTitle] = useState<string>('');
   const [message, setMessage] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [loading, setLoading] = useState(false);
+  // const [notifications, setNotifications] = useState<Notification[]>([]);
+  // const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const fetchNotifications = async () => {
-    setLoading(true);
-    try {
-      const data = await getNotifications();
-      setNotifications(data);
-    } catch (err) {
-      console.error("Failed to fetch notifications", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchNotifications();
-  }, []);
+    if (!notifications) {
+      fetchNotifications();
+    }
+  }, [fetchNotifications, notifications]);
 
   const handleStudentToggle = (studentId: string) => {
     setSelectedStudents(prev =>
@@ -93,7 +83,7 @@ const Notifications: React.FC = () => {
     student.student_id.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (loading) {
+  if (!notifications) {
     return <div className='flex items-center justify-center h-screen'><Loader2 className='animate-spin' /></div>
   }
 
@@ -131,27 +121,45 @@ const Notifications: React.FC = () => {
         />
 
         <div className="mt-8">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">
-            Sent Notifications
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-gray-900">
+              My Notifications
+            </h2>
+            <button
+              onClick={() => markAllAsRead()}
+              className="text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors"
+            >
+              Mark all as read
+            </button>
+          </div>
           <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 lg:p-8 space-y-6">
-            {loading && notifications.length === 0 ? (
-              <div className="flex justify-center">
-                <Loader2 className="animate-spin" />
-              </div>
-            ) : notifications.length > 0 ? (
-              notifications.map((notification) => (
-                <div key={notification.id}>
-                  <p>{notification.message}</p>
-                  <p>{new Date(notification.createdAt).toLocaleDateString()}</p>
-                </div>
-              ))
-            ) : (
+            {!notifications || notifications.length === 0 ? (
               <div className="text-center text-gray-500">
                 No notifications found.
               </div>
-            )}
-          </div>
+            ) : (notifications.map((notification) => (
+              <div
+                key={notification.id}
+                onClick={() => markAsRead(notification.id)}
+                className={`p-4 rounded-lg border cursor-pointer transition-all hover:shadow-md ${!notification.isRead
+                  ? "bg-blue-50 border-blue-200 shadow-sm"
+                  : "bg-white border-gray-100 opacity-75 hover:opacity-100"
+                  }`}
+              >
+                <p className={`text-sm ${!notification.isRead ? "font-semibold text-gray-900" : "text-gray-600"}`}>
+                  {notification.message}
+                </p>
+                <div className="flex justify-between items-center mt-2">
+                  <p className="text-xs text-gray-400">
+                    {new Date(notification.createdAt).toLocaleDateString()} • {new Date(notification.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                  {!notification.isRead && (
+                    <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                  )}
+                </div>
+              </div>
+            ))
+            )}          </div>
         </div>
       </div>
     </div>

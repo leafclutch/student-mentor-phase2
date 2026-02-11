@@ -330,30 +330,47 @@ export const MentorProvider = ({ children }: { children: ReactNode }) => {
   );
 
   const markAsRead = useCallback(async (notificationId: string) => {
+    // Optimistic Update
+    setNotifications((prev) =>
+      prev
+        ? prev.map((n) =>
+          n.id === notificationId ? { ...n, isRead: true } : n
+        )
+        : null
+    );
+
     try {
       await markNotificationAsRead(notificationId);
+    } catch (err) {
+      console.error(err);
+      // Revert on failure
       setNotifications((prev) =>
         prev
           ? prev.map((n) =>
-            n.id === notificationId ? { ...n, isRead: true } : n
+            n.id === notificationId ? { ...n, isRead: false } : n
           )
           : null
       );
-    } catch (err) {
-      console.error(err);
+      toast.error("Failed to mark as read");
     }
   }, []);
 
   const markAllAsReadAction = useCallback(async () => {
+    // Optimistic Update
+    const previousNotifications = notifications;
+    setNotifications((prev) =>
+      prev ? prev.map((n) => ({ ...n, isRead: true })) : null
+    );
+
     try {
       await apiMarkAllAsRead();
-      setNotifications((prev) =>
-        prev ? prev.map((n) => ({ ...n, isRead: true })) : null
-      );
     } catch (err) {
       console.error(err);
+      // Revert on failure
+      setNotifications(previousNotifications);
+      toast.error("Failed to mark all as read");
     }
-  }, []);
+  }, [notifications]);
 
   useEffect(() => {
     if (authUser && authUser.role === "MENTOR") {
